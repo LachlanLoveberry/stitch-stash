@@ -1,0 +1,9 @@
+# Copy this file to local.properties and fill in the values.
+# local.properties is git-ignored.
+
+# Path to your Android SDK (Android Studio sets this automatically the first time you sync)
+sdk.dir=/Users/YOU/Library/Android/sdk
+
+# Phase 6 (Drive backup) only — fill in after creating an Android OAuth Client ID
+# in Google Cloud Console. Leave blank to disable Drive backup at build time.
+# GOOGLE_OAUTH_CLIENT_ID=
