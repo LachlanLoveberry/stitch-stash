@@ -72,56 +72,13 @@ A calm, reward-focused crochet progress companion for Android. Local-first, no n
 
 Skip if you want to defer the Drive integration; Phases 1–5 + 7 all work without it.
 
-#### Once on the dev machine (CLI)
-```bash
-gcloud auth login
-gcloud projects create stitch-stash-app --name="Stitch Stash"
-gcloud config set project stitch-stash-app
-gcloud services enable drive.googleapis.com
-```
-
-#### Once in the Cloud Console UI (~5 min)
-
-1. **OAuth consent screen** (APIs & Services → OAuth consent screen)
-   - User Type: External
-   - App name: `Stitch Stash`
-   - User support email + developer contact: your email
-   - Add scope: `https://www.googleapis.com/auth/drive.file`
-   - **Test users**: wife's Google email + your email
-   - Keep in **Testing** mode (no Google verification needed; limit is 100 users)
-
-2. **Generate the debug SHA-1** on the dev machine
-   ```bash
-   keytool -keystore ~/.android/debug.keystore -storepass android \
-     -alias androiddebugkey -list | grep SHA1
-   ```
-
-3. **Create Android OAuth Client ID** (APIs & Services → Credentials → Create Credentials → OAuth Client ID)
-   - Application type: Android
-   - Package name: `com.lachlan.stitchstash`
-   - SHA-1: paste from step 2
-
-That's it — the legacy `GoogleSignIn` flow looks up the registered client by package + SHA-1 at runtime, no config file needed.
-
-#### Backup folder
-
-Create a folder called **"Stitch Stash Backups"** in your Google Drive, share it with edit access to her account. In the app: Settings → Drive → "Set folder" → paste the folder ID (the part after `/folders/` in the URL).
+The GCP project (`stitch-stash-app`) and Drive API are already provisioned. See **[CLOUD_SETUP.md](./CLOUD_SETUP.md)** for the remaining Console-UI steps (~5 min) — OAuth consent screen, Android OAuth client, Drive folder.
 
 ### 4. Release signing (Phase 7)
 
-Once when ready to publish:
-```bash
-keytool -genkey -v -keystore release.keystore \
-  -keyalg RSA -keysize 2048 -validity 25000 -alias stitch
-keytool -keystore release.keystore -alias stitch -list | grep SHA1
-```
+Full instructions in [CLOUD_SETUP.md → Release signing](./CLOUD_SETUP.md#release-signing).
 
-Add the release SHA-1 as a second SHA on the same OAuth client (so Drive backup keeps working in release builds).
-
-For GH Actions:
-- Base64-encode the keystore: `base64 -i release.keystore | pbcopy`
-- Add as repo secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`
-- Push a tag like `v0.1.0` → workflow builds & publishes the signed APK to Releases.
+TL;DR: generate `release.keystore` once, register its SHA-1 as a second SHA on the Android OAuth client, add 4 secrets to the GitHub repo, push a `v*` tag → automatic signed-APK release.
 
 ### 5. Project layout
 
