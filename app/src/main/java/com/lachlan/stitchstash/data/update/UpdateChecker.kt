@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
  */
 object UpdateChecker {
 
-    private const val OWNER = "lachlanloveberry"
+    private const val OWNER = "LachlanLoveberry"
     private const val REPO = "stitch-stash"
 
     private val client = OkHttpClient.Builder()
