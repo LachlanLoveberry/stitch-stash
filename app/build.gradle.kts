@@ -102,6 +102,7 @@ dependencies {
 
     implementation(libs.jsoup)
     implementation(libs.okhttp)
+    implementation(libs.lottie.compose)
 
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)

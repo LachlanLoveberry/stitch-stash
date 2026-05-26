@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -46,7 +45,7 @@ fun StickerBookScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
@@ -63,7 +62,7 @@ fun StickerBookScreen(
                         scaleIn(initialScale = 0.85f, animationSpec = tween(260, delayMillis = index * 35)),
                 ) {
                     StickerTile(
-                        emoji = def.emoji,
+                        type = def.type,
                         title = def.title,
                         earned = earned,
                         count = count,
@@ -75,31 +74,24 @@ fun StickerBookScreen(
 }
 
 @Composable
-private fun StickerTile(emoji: String, title: String, earned: Boolean, count: Int) {
+private fun StickerTile(type: String, title: String, earned: Boolean, count: Int) {
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = if (earned) MaterialTheme.colorScheme.surfaceVariant
-        else MaterialTheme.colorScheme.surface,
-        modifier = Modifier.aspectRatio(0.85f),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = if (earned) 1.dp else 0.dp,
+        modifier = Modifier.aspectRatio(0.78f),
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = if (earned) MaterialTheme.colorScheme.tertiary
-                else MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier.size(64.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        if (earned) emoji else "?",
-                        style = MaterialTheme.typography.displayMedium,
-                    )
-                }
-            }
+            StickerVisual(
+                type = type,
+                size = 80.dp,
+                earned = earned,
+                spin = earned,
+            )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     if (earned) title else "Locked",

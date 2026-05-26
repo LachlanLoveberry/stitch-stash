@@ -3,10 +3,12 @@ package com.lachlan.stitchstash.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lachlan.stitchstash.data.db.entities.Market
+import com.lachlan.stitchstash.data.db.entities.Sticker
 import com.lachlan.stitchstash.data.repository.StitchRepository
 import com.lachlan.stitchstash.domain.forecast.ForecastEngine
 import com.lachlan.stitchstash.domain.model.CompletionWithContext
 import com.lachlan.stitchstash.domain.model.PatternWithProgress
+import com.lachlan.stitchstash.domain.stickers.StickerCatalog
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -25,6 +27,10 @@ data class HomeState(
     val weeklyHours: Float = 4f,
     val targetPieces: Int = 0,
     val forecastVisible: Boolean = true,
+    val stickerBookEnabled: Boolean = true,
+    val recentStickers: List<Sticker> = emptyList(),
+    val totalStickerCount: Int = 0,
+    val uniqueStickerCount: Int = 0,
 )
 
 class HomeViewModel(repo: StitchRepository) : ViewModel() {
@@ -34,7 +40,8 @@ class HomeViewModel(repo: StitchRepository) : ViewModel() {
         repo.observePatternsWithProgress(),
         repo.observeRecentCompletionsWithContext(limit = 5),
         repo.observeSettings(),
-    ) { market, patterns, recent, settings ->
+        repo.observeStickers(),
+    ) { market, patterns, recent, settings, stickers ->
         val today = LocalDate.now()
         val piecesCompleted = ForecastEngine.piecesCompleted(patterns)
         val piecesPlanned = ForecastEngine.piecesPlanned(patterns)
@@ -70,6 +77,10 @@ class HomeViewModel(repo: StitchRepository) : ViewModel() {
             weeklyHours = settings.weeklyHours,
             targetPieces = settings.targetPieces,
             forecastVisible = settings.forecastVisible,
+            stickerBookEnabled = settings.stickerBookEnabled,
+            recentStickers = stickers.take(6),
+            totalStickerCount = stickers.size,
+            uniqueStickerCount = stickers.map { it.type }.distinct().size,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
 }

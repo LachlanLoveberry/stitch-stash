@@ -9,13 +9,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.domain.stickers.StickerCatalog
 import com.lachlan.stitchstash.ui.components.ConfettiBurst
+import com.lachlan.stitchstash.ui.stickers.StickerVisual
 
 @Composable
 fun CelebrationDialog(
@@ -27,12 +28,12 @@ fun CelebrationDialog(
         Box {
             ConfettiBurst(active = true)
             Surface(
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 4.dp,
                 modifier = Modifier
                     .padding(16.dp)
-                    .widthIn(max = 360.dp),
+                    .widthIn(max = 380.dp),
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -41,14 +42,14 @@ fun CelebrationDialog(
                 ) {
                     Text(
                         "Beautiful work ",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontFamily = FontFamily.Serif),
                         textAlign = TextAlign.Center,
                     )
 
                     if (data.photoPath != null) {
                         Box(
                             modifier = Modifier
-                                .size(140.dp)
+                                .size(160.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                         ) {
@@ -62,7 +63,7 @@ fun CelebrationDialog(
 
                     Text(
                         "${data.patternName} · ${data.colourwayName}",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
                         textAlign = TextAlign.Center,
                     )
 
@@ -72,20 +73,17 @@ fun CelebrationDialog(
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             data.stickers.forEach { sticker ->
                                 val def = StickerCatalog.get(sticker.type)
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = MaterialTheme.colorScheme.tertiary,
-                                        modifier = Modifier.size(56.dp),
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Text(def.emoji, style = MaterialTheme.typography.headlineMedium)
-                                        }
-                                    }
-                                    Spacer(Modifier.height(4.dp))
+                                    StickerVisual(
+                                        type = sticker.type,
+                                        size = 72.dp,
+                                        earned = true,
+                                        spin = true,
+                                    )
+                                    Spacer(Modifier.height(6.dp))
                                     Text(
                                         def.title,
                                         style = MaterialTheme.typography.labelLarge,
@@ -96,18 +94,26 @@ fun CelebrationDialog(
                         }
                     }
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(4.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                            Text("Done")
-                        }
-                        Button(onClick = onCreateCard, modifier = Modifier.weight(1f)) {
-                            Text("Make card")
-                        }
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                        ) { Text("Done") }
+                        Button(
+                            onClick = onCreateCard,
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                        ) { Text("Make card") }
                     }
                 }
             }

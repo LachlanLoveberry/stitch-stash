@@ -1,22 +1,23 @@
 package com.lachlan.stitchstash.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -33,12 +34,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.lachlan.stitchstash.data.db.entities.Sticker
 import com.lachlan.stitchstash.domain.model.CompletionWithContext
+import com.lachlan.stitchstash.domain.stickers.StickerCatalog
 import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.ProgressRing
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import com.lachlan.stitchstash.ui.components.UpdateBanner
+import com.lachlan.stitchstash.ui.stickers.StickerVisual
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -55,6 +59,11 @@ fun HomeScreen(
         currentRoute = TopLevelDestination.HOME.route,
         onNavigateTopLevel = onNavigate,
     ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+        ) {
         UpdateBanner()
 
         AnimatedVisibility(
@@ -127,15 +136,25 @@ fun HomeScreen(
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        AnimatedVisibility(
+            visible = state.stickerBookEnabled,
+            enter = fadeIn(animationSpec = tween(400)),
+            exit = fadeOut(),
+        ) {
+            Column {
+                Spacer(Modifier.height(20.dp))
+                StickerHighlightCard(
+                    recent = state.recentStickers,
+                    total = state.totalStickerCount,
+                    unique = state.uniqueStickerCount,
+                    onClick = { onNavigate(TopLevelDestination.STICKERS) },
+                )
+            }
+        }
 
-        Text(
-            "Recent wins",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = FontFamily.Serif,
-            ),
-        )
+        Spacer(Modifier.height(20.dp))
+
+        SectionHeader(title = "Recent wins")
         Spacer(Modifier.height(8.dp))
 
         AnimatedVisibility(visible = state.recentCompletions.isEmpty(), enter = fadeIn(), exit = fadeOut()) {
@@ -149,9 +168,127 @@ fun HomeScreen(
             RecentWinsStrip(state.recentCompletions)
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(16.dp))
+        } // end scrollable column
 
         BigCelebrateButton(onClick = onLogFinish)
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Text(
+        title,
+        style = MaterialTheme.typography.titleLarge.copy(
+            fontWeight = FontWeight.SemiBold,
+            fontFamily = FontFamily.Serif,
+        ),
+    )
+}
+
+@Composable
+private fun StickerHighlightCard(
+    recent: List<Sticker>,
+    total: Int,
+    unique: Int,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        tonalElevation = 1.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Outlined.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Sticker book",
+                    style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.weight(1f),
+                )
+                if (total > 0) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ) {
+                        Text(
+                            "$unique earned",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            if (recent.isEmpty()) {
+                EmptyStickerSlots()
+            } else {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    itemsIndexed(recent, key = { _, s -> s.id }) { index, sticker ->
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(animationSpec = tween(300, delayMillis = index * 60)) +
+                                slideInVertically(animationSpec = tween(320, delayMillis = index * 60)),
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                StickerVisual(
+                                    type = sticker.type,
+                                    size = 60.dp,
+                                    earned = true,
+                                    spin = false,
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    StickerCatalog.get(sticker.type).title,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyStickerSlots() {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        repeat(4) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "?",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f),
+                )
+            }
+        }
+        Spacer(Modifier.width(4.dp))
+        Text(
+            "Earn your first one by\nlogging a piece →",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+        )
     }
 }
 
