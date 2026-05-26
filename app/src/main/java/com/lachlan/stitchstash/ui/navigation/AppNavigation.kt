@@ -1,5 +1,10 @@
 package com.lachlan.stitchstash.ui.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -12,12 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.lachlan.stitchstash.StitchStashApp
+import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import com.lachlan.stitchstash.ui.finishcard.FinishCardGalleryScreen
 import com.lachlan.stitchstash.ui.finishcard.FinishCardScreen
 import com.lachlan.stitchstash.ui.home.HomeScreen
@@ -33,16 +40,9 @@ import com.lachlan.stitchstash.ui.stickers.StickerBookScreen
 
 object Routes {
     const val ONBOARDING = "onboarding"
-    const val HOME = "home"
-    const val PATTERNS = "patterns"
     const val ADD_PATTERN = "patterns/add"
     const val ESTIMATE_PATTERN = "patterns/estimate/{patternId}"
     const val LOG = "log"
-    const val PLAN = "plan"
-    const val STICKERS = "stickers"
-    const val MARKETS = "markets"
-    const val SETTINGS = "settings"
-    const val CARD_GALLERY = "cards"
     const val CARD_PREVIEW = "cards/{completionId}"
 
     fun estimatePattern(id: Long) = "patterns/estimate/$id"
@@ -61,36 +61,50 @@ fun AppNavigation() {
     }
 
     val start = remember {
-        if (currentSettings.onboardingComplete) Routes.HOME else Routes.ONBOARDING
+        if (currentSettings.onboardingComplete) TopLevelDestination.HOME.route else Routes.ONBOARDING
     }
 
-    NavHost(navController = nav, startDestination = start) {
+    val navigateTopLevel: (TopLevelDestination) -> Unit = { dest ->
+        nav.navigate(dest.route) {
+            popUpTo(TopLevelDestination.HOME.route) {
+                saveState = true
+                inclusive = false
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    NavHost(
+        navController = nav,
+        startDestination = start,
+        enterTransition = { fadeIn(tween(200)) },
+        exitTransition = { fadeOut(tween(150)) },
+    ) {
         composable(Routes.ONBOARDING) {
             OnboardingScreen(onComplete = {
-                nav.navigate(Routes.HOME) {
+                nav.navigate(TopLevelDestination.HOME.route) {
                     popUpTo(Routes.ONBOARDING) { inclusive = true }
                 }
             })
         }
-        composable(Routes.HOME) {
+        composable(TopLevelDestination.HOME.route) {
             HomeScreen(
                 onLogFinish = { nav.navigate(Routes.LOG) },
-                onOpenPatterns = { nav.navigate(Routes.PATTERNS) },
-                onOpenPlan = { nav.navigate(Routes.PLAN) },
-                onOpenSettings = { nav.navigate(Routes.SETTINGS) },
+                onNavigate = navigateTopLevel,
             )
         }
-        composable(Routes.PATTERNS) {
+        composable(TopLevelDestination.PATTERNS.route) {
             PatternListScreen(
                 onAddPattern = { nav.navigate(Routes.ADD_PATTERN) },
-                onBack = { nav.popBackStack() },
+                onNavigate = navigateTopLevel,
                 onEditEstimate = { id -> nav.navigate(Routes.estimatePattern(id)) },
             )
         }
         composable(Routes.ADD_PATTERN) {
             AddPatternScreen(
                 onDone = { nav.popBackStack() },
-                onCancel = { nav.popBackStack() },
+                onBack = { nav.popBackStack() },
             )
         }
         composable(
@@ -105,7 +119,7 @@ fun AppNavigation() {
         composable(Routes.LOG) {
             LogCompletionScreen(
                 onDone = { nav.popBackStack() },
-                onCancel = { nav.popBackStack() },
+                onBack = { nav.popBackStack() },
                 onAddPattern = {
                     nav.navigate(Routes.ADD_PATTERN) {
                         popUpTo(Routes.LOG) { inclusive = true }
@@ -118,25 +132,20 @@ fun AppNavigation() {
                 },
             )
         }
-        composable(Routes.PLAN) {
-            PlanScreen(onBack = { nav.popBackStack() })
+        composable(TopLevelDestination.PLAN.route) {
+            PlanScreen(onNavigate = navigateTopLevel)
         }
-        composable(Routes.STICKERS) {
-            StickerBookScreen(onBack = { nav.popBackStack() })
+        composable(TopLevelDestination.STICKERS.route) {
+            StickerBookScreen(onNavigate = navigateTopLevel)
         }
-        composable(Routes.MARKETS) {
-            MarketsScreen(onBack = { nav.popBackStack() })
+        composable(TopLevelDestination.MARKETS.route) {
+            MarketsScreen(onNavigate = navigateTopLevel)
         }
-        composable(Routes.SETTINGS) {
-            SettingsScreen(
-                onBack = { nav.popBackStack() },
-                onOpenMarkets = { nav.navigate(Routes.MARKETS) },
-                onOpenStickers = { nav.navigate(Routes.STICKERS) },
-                onOpenCards = { nav.navigate(Routes.CARD_GALLERY) },
-            )
+        composable(TopLevelDestination.SETTINGS.route) {
+            SettingsScreen(onNavigate = navigateTopLevel)
         }
-        composable(Routes.CARD_GALLERY) {
-            FinishCardGalleryScreen(onBack = { nav.popBackStack() })
+        composable(TopLevelDestination.CARDS.route) {
+            FinishCardGalleryScreen(onNavigate = navigateTopLevel)
         }
         composable(
             route = Routes.CARD_PREVIEW,

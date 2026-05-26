@@ -1,6 +1,5 @@
 package com.lachlan.stitchstash.ui.settings
 
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -12,13 +11,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.lachlan.stitchstash.data.drive.GoogleSignInHelper
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DrawerScaffold
+import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -26,10 +27,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit,
-    onOpenMarkets: () -> Unit,
-    onOpenStickers: () -> Unit,
-    onOpenCards: () -> Unit,
+    onNavigate: (TopLevelDestination) -> Unit,
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val context = LocalContext.current
@@ -52,18 +50,11 @@ fun SettingsScreen(
     var folderInput by remember { mutableStateOf("") }
     var showFolderDialog by remember { mutableStateOf(false) }
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onBack) { Text("Back") }
-            Text("Settings", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(48.dp))
-        }
-        Spacer(Modifier.height(8.dp))
-
+    DrawerScaffold(
+        title = "Settings",
+        currentRoute = TopLevelDestination.SETTINGS.route,
+        onNavigateTopLevel = onNavigate,
+    ) {
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -71,20 +62,14 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SectionCard("Plan") {
-                LabelledRow(
-                    "Weekly hours target",
-                    "${(settings.weeklyHours * 2).roundToInt() / 2f} h/wk",
-                )
+                LabelledRow("Weekly hours target", "${(settings.weeklyHours * 2).roundToInt() / 2f} h/wk")
                 Slider(
                     value = settings.weeklyHours,
                     onValueChange = { value -> viewModel.update { it.copy(weeklyHours = value) } },
                     valueRange = 0.5f..30f,
                     steps = 58,
                 )
-                LabelledRow(
-                    "Target pieces",
-                    if (settings.targetPieces == 0) "—" else settings.targetPieces.toString(),
-                )
+                LabelledRow("Target pieces", if (settings.targetPieces == 0) "—" else settings.targetPieces.toString())
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     FilledTonalIconButton(onClick = {
                         viewModel.update { it.copy(targetPieces = (it.targetPieces - 1).coerceAtLeast(0)) }
@@ -115,12 +100,6 @@ fun SettingsScreen(
                     checked = settings.weeklyRecapEnabled,
                     onChange = { v -> viewModel.update { it.copy(weeklyRecapEnabled = v) } },
                 )
-            }
-
-            SectionCard("Markets, stickers & cards") {
-                ListRow("Markets", onOpenMarkets)
-                ListRow("Sticker book", onOpenStickers)
-                ListRow("Finish card gallery", onOpenCards)
             }
 
             SectionCard("Google Drive backup") {
@@ -191,9 +170,7 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(12.dp))
                 OutlinedButton(onClick = {
-                    viewModel.exportToDevice(context) { path ->
-                        // path saved; could surface a share intent here
-                    }
+                    viewModel.exportToDevice(context) { }
                 }, modifier = Modifier.fillMaxWidth()) {
                     Text("Export a copy to this device")
                 }
@@ -237,12 +214,16 @@ fun SettingsScreen(
 @Composable
 private fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+            )
             content()
         }
     }
@@ -270,14 +251,6 @@ private fun ToggleRow(label: String, description: String?, checked: Boolean, onC
             }
         }
         Switch(checked = checked, onCheckedChange = onChange)
-    }
-}
-
-@Composable
-private fun ListRow(label: String, onClick: () -> Unit) {
-    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(label, modifier = Modifier.weight(1f))
-        Text("›")
     }
 }
 

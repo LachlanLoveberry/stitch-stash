@@ -9,13 +9,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DetailScaffold
 import java.io.File
 
 @Composable
@@ -27,25 +28,13 @@ fun FinishCardScreen(
     val context = LocalContext.current
     val state by viewModel.preview.collectAsStateWithLifecycle()
 
-    LaunchedEffect(completionId) {
-        viewModel.prepare(context, completionId)
-    }
+    LaunchedEffect(completionId) { viewModel.prepare(context, completionId) }
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onBack) { Text("Back") }
-            Text("Finish card", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(48.dp))
-        }
-        Spacer(Modifier.height(12.dp))
-
+    DetailScaffold(title = "Finish card", onBack = onBack) {
         Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 2.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1080f / 1350f),
@@ -57,17 +46,18 @@ fun FinishCardScreen(
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxSize()
-                            .clip(RoundedCornerShape(20.dp)),
+                            .clip(RoundedCornerShape(24.dp)),
                     )
                 }
-                if (state.rendering) {
-                    CircularProgressIndicator()
-                }
+                if (state.rendering) CircularProgressIndicator()
             }
         }
 
         Spacer(Modifier.height(16.dp))
-        Text("Border style", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Border style",
+            style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+        )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BorderStyle.values().forEach { style ->
@@ -88,14 +78,20 @@ fun FinishCardScreen(
                     viewModel.saveCurrent(completionId)
                     sharePng(context, path)
                 },
+                shape = RoundedCornerShape(20.dp),
                 enabled = state.imagePath != null && !state.rendering,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
             ) { Text("Share") }
             Button(
                 onClick = { viewModel.saveCurrent(completionId) },
+                shape = RoundedCornerShape(20.dp),
                 enabled = state.imagePath != null && !state.rendering && !state.saved,
-                modifier = Modifier.weight(1f),
-            ) { Text(if (state.saved) "Saved " else "Save to gallery") }
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+            ) { Text(if (state.saved) "Saved " else "Save") }
         }
     }
 }

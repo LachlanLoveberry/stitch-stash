@@ -6,13 +6,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lachlan.stitchstash.data.db.entities.Market
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DrawerScaffold
+import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -21,24 +23,18 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarketsScreen(
-    onBack: () -> Unit,
+    onNavigate: (TopLevelDestination) -> Unit,
     viewModel: MarketsViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val markets by viewModel.markets.collectAsStateWithLifecycle()
     var showAdd by remember { mutableStateOf(false) }
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onBack) { Text("Back") }
-            Text("Markets", style = MaterialTheme.typography.headlineMedium)
-            TextButton(onClick = { showAdd = true }) { Text("Add") }
-        }
-        Spacer(Modifier.height(8.dp))
-
+    DrawerScaffold(
+        title = "Markets",
+        currentRoute = TopLevelDestination.MARKETS.route,
+        onNavigateTopLevel = onNavigate,
+        actions = { TextButton(onClick = { showAdd = true }) { Text("Add") } },
+    ) {
         if (markets.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -47,38 +43,35 @@ fun MarketsScreen(
                 )
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxSize()) {
-                markets.forEach { market ->
-                    MarketRow(market, viewModel)
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
+                markets.forEach { market -> MarketRow(market, viewModel) }
             }
         }
     }
 
     if (showAdd) {
         AddMarketDialog(
-            onAdd = { name, date ->
-                viewModel.add(name, date)
-                showAdd = false
-            },
+            onAdd = { name, date -> viewModel.add(name, date); showAdd = false },
             onDismiss = { showAdd = false },
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MarketRow(market: Market, viewModel: MarketsViewModel) {
     val date = LocalDate.ofEpochDay(market.dateEpochDay)
     var showDate by remember { mutableStateOf(false) }
     Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                market.name,
-                style = MaterialTheme.typography.titleLarge,
+                " ${market.name}",
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
                 textDecoration = if (market.isSkipped) TextDecoration.LineThrough else null,
             )
             Text(

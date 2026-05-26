@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -25,7 +26,7 @@ import coil.compose.AsyncImage
 import com.lachlan.stitchstash.data.db.entities.Colourway
 import com.lachlan.stitchstash.data.db.entities.Pattern
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DetailScaffold
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -35,7 +36,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun LogCompletionScreen(
     onDone: () -> Unit,
-    onCancel: () -> Unit,
+    onBack: () -> Unit,
     onAddPattern: () -> Unit,
     onCreateCard: (Long) -> Unit,
     viewModel: LogCompletionViewModel = viewModel(factory = AppViewModelFactory),
@@ -56,23 +57,11 @@ fun LogCompletionScreen(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri: Uri? -> if (uri != null) photoUri = uri }
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onCancel) { Text("Cancel") }
-            Text("I finished one ", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(48.dp))
-        }
-
+    DetailScaffold(title = "I finished one ", onBack = onBack) {
         if (state.patterns.isEmpty()) {
             EmptyStateNoPatterns(onAddPattern)
-            return@SoftScaffold
+            return@DetailScaffold
         }
-
-        Spacer(Modifier.height(16.dp))
 
         Column(
             modifier = Modifier
@@ -80,7 +69,7 @@ fun LogCompletionScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Pattern", style = MaterialTheme.typography.titleLarge)
+            SectionLabel("Pattern")
             state.patterns.forEach { p ->
                 PatternRow(
                     pattern = p,
@@ -95,7 +84,7 @@ fun LogCompletionScreen(
             selectedPattern?.let { pattern ->
                 val colourways = state.colourwaysByPattern[pattern.id].orEmpty()
                 if (colourways.isNotEmpty()) {
-                    Text("Colourway", style = MaterialTheme.typography.titleLarge)
+                    SectionLabel("Colourway")
                     colourways.forEach { cw ->
                         ChoiceRow(
                             label = cw.name,
@@ -106,24 +95,23 @@ fun LogCompletionScreen(
                 }
             }
 
-            Text("Finished on", style = MaterialTheme.typography.titleLarge)
+            SectionLabel("Finished on")
             OutlinedButton(
                 onClick = { showDatePicker = true },
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(date.format(DateTimeFormatter.ofPattern("EEEE, MMM d")))
             }
 
-            Text("Photo (optional)", style = MaterialTheme.typography.titleLarge)
+            SectionLabel("Photo (optional)")
             PhotoPicker(
                 uri = photoUri,
-                onPick = {
-                    pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                },
+                onPick = { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onClear = { photoUri = null },
             )
 
-            Text("How did it feel? (optional)", style = MaterialTheme.typography.titleLarge)
+            SectionLabel("How did it feel? (optional)")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("good" to " Good", "ok" to " Okay", "low" to " Low").forEach { (key, label) ->
                     FilterChip(
@@ -159,8 +147,10 @@ fun LogCompletionScreen(
                 )
             },
             enabled = selectedColourway != null,
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxWidth()
+                .height(56.dp)
                 .padding(top = 12.dp),
         ) {
             Text("Celebrate this one ")
@@ -204,6 +194,14 @@ fun LogCompletionScreen(
 }
 
 @Composable
+private fun SectionLabel(label: String) {
+    Text(
+        label,
+        style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+    )
+}
+
+@Composable
 private fun ColumnScope.EmptyStateNoPatterns(onAddPattern: () -> Unit) {
     Box(
         modifier = Modifier
@@ -212,7 +210,10 @@ private fun ColumnScope.EmptyStateNoPatterns(onAddPattern: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Add a pattern first", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                "Add a pattern first",
+                style = MaterialTheme.typography.headlineMedium.copy(fontFamily = FontFamily.Serif),
+            )
             Spacer(Modifier.height(8.dp))
             Text(
                 "Once you have at least one pattern with a colourway, you can log a finish here.",
@@ -227,9 +228,10 @@ private fun ColumnScope.EmptyStateNoPatterns(onAddPattern: () -> Unit) {
 @Composable
 private fun PatternRow(pattern: Pattern, selected: Boolean, onClick: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant,
+        else MaterialTheme.colorScheme.surface,
+        tonalElevation = if (selected) 0.dp else 1.dp,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
@@ -240,9 +242,9 @@ private fun PatternRow(pattern: Pattern, selected: Boolean, onClick: () -> Unit)
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.background),
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
                 if (pattern.coverImageUri != null) {
@@ -260,9 +262,10 @@ private fun PatternRow(pattern: Pattern, selected: Boolean, onClick: () -> Unit)
 @Composable
 private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(12.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else MaterialTheme.colorScheme.surfaceVariant,
+        else MaterialTheme.colorScheme.surface,
+        tonalElevation = if (selected) 0.dp else 1.dp,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
@@ -270,7 +273,7 @@ private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
         Text(
             label,
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
         )
     }
 }
@@ -278,11 +281,11 @@ private fun ChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
 @Composable
 private fun PhotoPicker(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp),
+            .height(180.dp),
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             if (uri != null) {
@@ -291,7 +294,7 @@ private fun PhotoPicker(uri: Uri?, onPick: () -> Unit, onClear: () -> Unit) {
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(16.dp)),
+                        .clip(RoundedCornerShape(20.dp)),
                 )
                 FilledTonalButton(
                     onClick = onClear,

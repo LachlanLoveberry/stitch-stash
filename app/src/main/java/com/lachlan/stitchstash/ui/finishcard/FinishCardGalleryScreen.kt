@@ -20,29 +20,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DrawerScaffold
+import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import java.io.File
 
 @Composable
 fun FinishCardGalleryScreen(
-    onBack: () -> Unit,
+    onNavigate: (TopLevelDestination) -> Unit,
     viewModel: FinishCardViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val context = LocalContext.current
     val cards by viewModel.savedCards.collectAsStateWithLifecycle()
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onBack) { Text("Back") }
-            Text("Finish cards", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(48.dp))
-        }
-        Spacer(Modifier.height(16.dp))
-
+    DrawerScaffold(
+        title = "Finish cards",
+        currentRoute = TopLevelDestination.CARDS.route,
+        onNavigateTopLevel = onNavigate,
+    ) {
         if (cards.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
@@ -59,8 +53,9 @@ fun FinishCardGalleryScreen(
             ) {
                 items(cards, key = { it.id }) { card ->
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 1.dp,
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1080f / 1350f)
@@ -71,7 +66,7 @@ fun FinishCardGalleryScreen(
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(16.dp)),
+                                .clip(RoundedCornerShape(20.dp)),
                         )
                     }
                 }

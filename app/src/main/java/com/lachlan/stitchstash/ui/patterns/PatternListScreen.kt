@@ -1,11 +1,15 @@
 package com.lachlan.stitchstash.ui.patterns
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -16,35 +20,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.domain.model.PatternWithProgress
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DrawerScaffold
+import com.lachlan.stitchstash.ui.components.TopLevelDestination
 
 @Composable
 fun PatternListScreen(
     onAddPattern: () -> Unit,
-    onBack: () -> Unit,
+    onNavigate: (TopLevelDestination) -> Unit,
     onEditEstimate: (Long) -> Unit,
     viewModel: PatternListViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val patterns by viewModel.patterns.collectAsStateWithLifecycle()
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onBack) { Text("Back") }
-            Text("Patterns", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(48.dp))
-        }
-        Spacer(Modifier.height(16.dp))
-
+    DrawerScaffold(
+        title = "Patterns",
+        currentRoute = TopLevelDestination.PATTERNS.route,
+        onNavigateTopLevel = onNavigate,
+    ) {
         if (patterns.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -55,7 +55,7 @@ fun PatternListScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         "No patterns yet",
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineMedium.copy(fontFamily = FontFamily.Serif),
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -71,21 +71,29 @@ fun PatternListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f),
             ) {
-                items(patterns, key = { it.pattern.id }) { item ->
-                    PatternCard(item, onClick = { onEditEstimate(item.pattern.id) })
+                itemsIndexed(patterns, key = { _, p -> p.pattern.id }) { index, item ->
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(animationSpec = tween(220, delayMillis = index * 40)) +
+                            slideInVertically(animationSpec = tween(260, delayMillis = index * 40)),
+                    ) {
+                        PatternCard(item, onClick = { onEditEstimate(item.pattern.id) })
+                    }
                 }
             }
         }
 
         Button(
             onClick = onAddPattern,
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxWidth()
+                .height(56.dp)
                 .padding(top = 16.dp),
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(Modifier.width(8.dp))
-            Text("Add pattern")
+            Text("Add pattern", fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -93,19 +101,20 @@ fun PatternListScreen(
 @Composable
 private fun PatternCard(item: PatternWithProgress, onClick: () -> Unit) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.background),
+                    .height(130.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
                 if (item.pattern.coverImageUri != null) {
@@ -122,14 +131,24 @@ private fun PatternCard(item: PatternWithProgress, onClick: () -> Unit) {
                     )
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(item.pattern.name, style = MaterialTheme.typography.titleLarge, maxLines = 2)
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
-                "${item.totalCompleted} / ${item.totalTarget} done",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                item.pattern.name,
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+                maxLines = 2,
             )
+            Spacer(Modifier.height(4.dp))
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primaryContainer,
+            ) {
+                Text(
+                    " ${item.totalCompleted} / ${item.totalTarget} done",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                )
+            }
         }
     }
 }

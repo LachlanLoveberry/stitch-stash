@@ -17,17 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.ui.AppViewModelFactory
-import com.lachlan.stitchstash.ui.components.SoftScaffold
+import com.lachlan.stitchstash.ui.components.DetailScaffold
 
 @Composable
 fun AddPatternScreen(
     onDone: () -> Unit,
-    onCancel: () -> Unit,
+    onBack: () -> Unit,
     viewModel: AddPatternViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val context = LocalContext.current
@@ -45,9 +46,7 @@ fun AddPatternScreen(
             ),
         )
     }
-
     val importState by viewModel.importState.collectAsStateWithLifecycle()
-
     val pickImage = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri: Uri? ->
@@ -57,18 +56,7 @@ fun AddPatternScreen(
         }
     }
 
-    SoftScaffold {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onCancel) { Text("Cancel") }
-            Text("New pattern", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.width(48.dp))
-        }
-        Spacer(Modifier.height(16.dp))
-
+    DetailScaffold(title = "New pattern", onBack = onBack) {
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -77,10 +65,9 @@ fun AddPatternScreen(
         ) {
             OutlinedButton(
                 onClick = { showImportDialog = true },
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Import from Ribblr URL")
-            }
+            ) { Text("Import from Ribblr URL") }
 
             OutlinedTextField(
                 value = name,
@@ -101,16 +88,17 @@ fun AddPatternScreen(
             CoverImagePicker(
                 preloadedPath = preloadedCoverPath,
                 pickedUri = coverUri,
-                onPick = {
-                    pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                },
+                onPick = { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 onClear = {
                     coverUri = null
                     preloadedCoverPath = null
                 },
             )
 
-            Text("Colourways", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Colourways",
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+            )
 
             colourways.forEachIndexed { index, input ->
                 ColourwayRow(
@@ -125,30 +113,21 @@ fun AddPatternScreen(
             }
 
             TextButton(onClick = { colourways = colourways + ColourwayInput() }) {
-                Text("Add another colourway")
+                Text("+ Another colourway")
             }
         }
 
         Button(
             onClick = {
-                viewModel.save(
-                    context = context,
-                    name = name,
-                    coverUri = coverUri,
-                    preloadedCoverPath = preloadedCoverPath,
-                    ribblrUrl = ribblrUrl,
-                    designer = designer,
-                    colourwayInputs = colourways,
-                    onDone = onDone,
-                )
+                viewModel.save(context, name, coverUri, preloadedCoverPath, ribblrUrl, designer, colourways, onDone)
             },
             enabled = name.isNotBlank(),
+            shape = RoundedCornerShape(20.dp),
             modifier = Modifier
                 .fillMaxWidth()
+                .height(56.dp)
                 .padding(top = 12.dp),
-        ) {
-            Text("Save")
-        }
+        ) { Text("Save") }
     }
 
     if (showImportDialog) {
@@ -231,11 +210,11 @@ private fun CoverImagePicker(
 ) {
     val model: Any? = preloadedPath ?: pickedUri
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp),
+            .height(200.dp),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             if (model != null) {
@@ -244,7 +223,7 @@ private fun CoverImagePicker(
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(16.dp)),
+                        .clip(RoundedCornerShape(20.dp)),
                 )
                 FilledTonalButton(
                     onClick = onClear,
@@ -275,8 +254,9 @@ private fun ColourwayRow(
     onRemove: (() -> Unit)?,
 ) {
     Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
