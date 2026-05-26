@@ -18,7 +18,7 @@ credentials = "1.5.0"
 googleId = "1.1.1"
 playServicesAuth = "21.4.0"
 googleApiClient = "2.7.2"
-googleApiServicesDrive = "v3-rev20250504-2.0.0"
+googleApiServicesDrive = "v3-rev20260428-2.0.0"
 lottie = "6.6.6"
 
 [libraries]

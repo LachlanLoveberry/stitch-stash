@@ -134,7 +134,7 @@ object FinishCardRenderer {
     private fun drawBorder(canvas: Canvas, style: BorderStyle) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.parseColor("#D4A5A5")
-            style = Paint.Style.FILL
+            this.style = Paint.Style.FILL
         }
         when (style) {
             BorderStyle.FLORAL -> drawFloral(canvas, paint)
