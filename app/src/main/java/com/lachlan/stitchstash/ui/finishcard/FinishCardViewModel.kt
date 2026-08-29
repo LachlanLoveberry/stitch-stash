@@ -91,4 +91,8 @@ class FinishCardViewModel(private val repo: StitchRepository) : ViewModel() {
             _preview.value = current.copy(saved = true)
         }
     }
+
+    fun deleteCard(id: Long) {
+        viewModelScope.launch { repo.deleteFinishCard(id) }
+    }
 }

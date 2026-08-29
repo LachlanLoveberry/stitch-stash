@@ -32,4 +32,8 @@ class MarketsViewModel(private val repo: StitchRepository) : ViewModel() {
     fun reschedule(market: Market, newDate: LocalDate) {
         viewModelScope.launch { repo.updateMarket(market.copy(dateEpochDay = newDate.toEpochDay())) }
     }
+
+    fun delete(market: Market) {
+        viewModelScope.launch { repo.deleteMarket(market.id) }
+    }
 }

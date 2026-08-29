@@ -1,7 +1,9 @@
 package com.lachlan.stitchstash.ui.finishcard
 
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -10,6 +12,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,11 +24,14 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.lachlan.stitchstash.data.db.entities.FinishCard
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import java.io.File
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FinishCardGalleryScreen(
     onNavigate: (TopLevelDestination) -> Unit,
@@ -31,6 +39,7 @@ fun FinishCardGalleryScreen(
 ) {
     val context = LocalContext.current
     val cards by viewModel.savedCards.collectAsStateWithLifecycle()
+    var pendingDelete by remember { mutableStateOf<FinishCard?>(null) }
 
     DrawerScaffold(
         title = "Finish cards",
@@ -59,7 +68,10 @@ fun FinishCardGalleryScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1080f / 1350f)
-                            .clickable { share(context, card.imagePath) },
+                            .combinedClickable(
+                                onClick = { share(context, card.imagePath) },
+                                onLongClick = { pendingDelete = card },
+                            ),
                     ) {
                         AsyncImage(
                             model = card.imagePath,
@@ -72,6 +84,17 @@ fun FinishCardGalleryScreen(
                 }
             }
         }
+    }
+
+    pendingDelete?.let { card ->
+        ConfirmDeleteDialog(
+            itemLabel = "this finish card",
+            onConfirm = {
+                viewModel.deleteCard(card.id)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
+        )
     }
 }
 

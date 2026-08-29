@@ -2,6 +2,7 @@ package com.lachlan.stitchstash.ui.plan
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
@@ -20,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lachlan.stitchstash.domain.forecast.ScenarioSolver
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.AddItemModal
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import java.time.Instant
@@ -592,6 +595,8 @@ private fun SavedScenariosSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     } else {
+        var pendingDelete by remember { mutableStateOf<com.lachlan.stitchstash.data.db.entities.Scenario?>(null) }
+
         scenarios.forEach { sc ->
             Surface(
                 shape = RoundedCornerShape(16.dp),
@@ -614,9 +619,20 @@ private fun SavedScenariosSection(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    TextButton(onClick = { viewModel.delete(sc.id) }) { Text("Delete") }
+                    TextButton(onClick = { pendingDelete = sc }) { Text("Delete") }
                 }
             }
+        }
+
+        pendingDelete?.let { sc ->
+            com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog(
+                itemLabel = "\"${sc.name}\"",
+                onConfirm = {
+                    viewModel.delete(sc.id)
+                    pendingDelete = null
+                },
+                onDismiss = { pendingDelete = null },
+            )
         }
     }
 }
@@ -634,20 +650,20 @@ private fun summarise(sc: com.lachlan.stitchstash.data.db.entities.Scenario): St
 @Composable
 private fun SaveScenarioDialog(initialName: String, onSave: (String) -> Unit, onDismiss: () -> Unit) {
     var name by remember { mutableStateOf(initialName) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Save plan") },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Name") },
-                singleLine = true,
-            )
-        },
-        confirmButton = { TextButton(onClick = { onSave(name) }, enabled = name.isNotBlank()) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+    AddItemModal(
+        title = "Save plan",
+        onDismiss = onDismiss,
+        onConfirm = { onSave(name) },
+        confirmEnabled = name.isNotBlank(),
+        confirmLabel = "Save",
+    ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Name") },
+            singleLine = true,
+        )
+    }
 }
 
 private fun formatHours(h: Float?): String =

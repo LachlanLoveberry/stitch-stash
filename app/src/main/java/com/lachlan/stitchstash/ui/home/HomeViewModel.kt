@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 data class HomeState(
@@ -33,7 +34,11 @@ data class HomeState(
     val uniqueStickerCount: Int = 0,
 )
 
-class HomeViewModel(repo: StitchRepository) : ViewModel() {
+class HomeViewModel(private val repo: StitchRepository) : ViewModel() {
+
+    fun deleteCompletion(id: Long) {
+        viewModelScope.launch { repo.deleteCompletion(id) }
+    }
 
     val state: StateFlow<HomeState> = combine(
         repo.observeNextMarket(),

@@ -4,8 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -17,6 +18,9 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.domain.model.PatternWithProgress
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 
@@ -39,6 +44,7 @@ fun PatternListScreen(
     viewModel: PatternListViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val patterns by viewModel.patterns.collectAsStateWithLifecycle()
+    var pendingDelete by remember { mutableStateOf<PatternWithProgress?>(null) }
 
     DrawerScaffold(
         title = "Patterns",
@@ -77,10 +83,32 @@ fun PatternListScreen(
                         enter = fadeIn(animationSpec = tween(220, delayMillis = index * 40)) +
                             slideInVertically(animationSpec = tween(260, delayMillis = index * 40)),
                     ) {
-                        PatternCard(item, onClick = { onEditEstimate(item.pattern.id) })
+                        PatternCard(
+                            item,
+                            onClick = { onEditEstimate(item.pattern.id) },
+                            onLongClick = { pendingDelete = item },
+                        )
                     }
                 }
             }
+            Text(
+                "Long-press a pattern to delete it",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+
+        pendingDelete?.let { item ->
+            ConfirmDeleteDialog(
+                itemLabel = "\"${item.pattern.name}\"",
+                message = "This removes the pattern, its colourways, and their logged completions. This can't be undone.",
+                onConfirm = {
+                    viewModel.deletePattern(item.pattern.id)
+                    pendingDelete = null
+                },
+                onDismiss = { pendingDelete = null },
+            )
         }
 
         Button(
@@ -98,15 +126,16 @@ fun PatternListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PatternCard(item: PatternWithProgress, onClick: () -> Unit) {
+private fun PatternCard(item: PatternWithProgress, onClick: () -> Unit, onLongClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             Box(

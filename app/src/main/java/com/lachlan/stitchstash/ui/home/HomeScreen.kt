@@ -1,12 +1,15 @@
 package com.lachlan.stitchstash.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -22,7 +25,9 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +43,7 @@ import com.lachlan.stitchstash.data.db.entities.Sticker
 import com.lachlan.stitchstash.domain.model.CompletionWithContext
 import com.lachlan.stitchstash.domain.stickers.StickerCatalog
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.ProgressRing
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
@@ -165,7 +171,7 @@ fun HomeScreen(
             )
         }
         AnimatedVisibility(visible = state.recentCompletions.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
-            RecentWinsStrip(state.recentCompletions)
+            RecentWinsStrip(state.recentCompletions, onDelete = viewModel::deleteCompletion)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -267,25 +273,27 @@ private fun StickerHighlightCard(
 
 @Composable
 private fun EmptyStickerSlots() {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        repeat(4) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    "?",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f),
-                )
+    Column {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            repeat(4) {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "?",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f),
+                    )
+                }
             }
         }
-        Spacer(Modifier.width(4.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
-            "Earn your first one by\nlogging a piece →",
+            "Earn your first one by logging a piece →",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
         )
@@ -320,7 +328,9 @@ private fun BigCelebrateButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun RecentWinsStrip(items: List<CompletionWithContext>) {
+private fun RecentWinsStrip(items: List<CompletionWithContext>, onDelete: (Long) -> Unit) {
+    var pendingDelete by remember { mutableStateOf<CompletionWithContext?>(null) }
+
     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         itemsIndexed(items, key = { _, item -> item.completion.id }) { index, item ->
             AnimatedVisibility(
@@ -328,17 +338,31 @@ private fun RecentWinsStrip(items: List<CompletionWithContext>) {
                 enter = fadeIn(animationSpec = tween(300, delayMillis = index * 60)) +
                     slideInVertically(animationSpec = tween(300, delayMillis = index * 60)),
             ) {
-                RecentWinCard(item)
+                RecentWinCard(item, onLongClick = { pendingDelete = item })
             }
         }
     }
+
+    pendingDelete?.let { item ->
+        ConfirmDeleteDialog(
+            itemLabel = "this finish (${item.pattern.name} · ${item.colourway.name})",
+            onConfirm = {
+                onDelete(item.completion.id)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
+        )
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RecentWinCard(item: CompletionWithContext) {
+private fun RecentWinCard(item: CompletionWithContext, onLongClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(100.dp),
+        modifier = Modifier
+            .width(100.dp)
+            .combinedClickable(onClick = {}, onLongClick = onLongClick),
     ) {
         val image = item.completion.photoUri ?: item.pattern.coverImageUri
         Surface(

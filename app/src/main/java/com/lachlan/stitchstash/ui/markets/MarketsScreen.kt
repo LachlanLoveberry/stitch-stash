@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lachlan.stitchstash.data.db.entities.Market
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import java.time.Instant
@@ -62,6 +63,7 @@ fun MarketsScreen(
 private fun MarketRow(market: Market, viewModel: MarketsViewModel) {
     val date = LocalDate.ofEpochDay(market.dateEpochDay)
     var showDate by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -84,8 +86,19 @@ private fun MarketRow(market: Market, viewModel: MarketsViewModel) {
                 TextButton(onClick = { viewModel.toggleSkipped(market) }) {
                     Text(if (market.isSkipped) "Unskip" else "Skip")
                 }
+                TextButton(onClick = { showDeleteConfirm = true }) { Text("Delete") }
             }
         }
+    }
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            itemLabel = "\"${market.name}\"",
+            onConfirm = {
+                viewModel.delete(market)
+                showDeleteConfirm = false
+            },
+            onDismiss = { showDeleteConfirm = false },
+        )
     }
     if (showDate) {
         val state = rememberDatePickerState(

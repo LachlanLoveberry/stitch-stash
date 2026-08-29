@@ -47,6 +47,8 @@ class StitchRepository(private val db: StitchStashDatabase) {
 
     suspend fun updateMarket(market: Market) = db.marketDao().update(market)
 
+    suspend fun deleteMarket(id: Long) = db.marketDao().delete(id)
+
     // ---- Patterns ----------------------------------------------------------
 
     fun observePatterns(): Flow<List<Pattern>> = db.patternDao().observeAll()
