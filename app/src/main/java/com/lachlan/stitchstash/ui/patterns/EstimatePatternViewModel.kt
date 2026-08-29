@@ -2,35 +2,58 @@ package com.lachlan.stitchstash.ui.patterns
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lachlan.stitchstash.data.db.entities.Colourway
 import com.lachlan.stitchstash.data.db.entities.Pattern
 import com.lachlan.stitchstash.data.repository.StitchRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class EstimateState(
     val pattern: Pattern? = null,
     val allPatterns: List<Pattern> = emptyList(),
+    val colourways: List<Colourway> = emptyList(),
 )
 
 class EstimatePatternViewModel(private val repo: StitchRepository) : ViewModel() {
 
     private val patternId = MutableStateFlow<Long?>(null)
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val colourwaysFlow = patternId.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else repo.observeColourwaysForPattern(id)
+    }
+
     val state: StateFlow<EstimateState> = combine(
         patternId,
         repo.observePatterns(),
-    ) { id, patterns ->
+        colourwaysFlow,
+    ) { id, patterns, colourways ->
         EstimateState(
             pattern = patterns.firstOrNull { it.id == id },
             allPatterns = patterns,
+            colourways = colourways,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), EstimateState())
 
     fun load(id: Long) { patternId.value = id }
+
+    fun addColourway(name: String, targetCount: Int) {
+        val id = patternId.value ?: return
+        viewModelScope.launch {
+            repo.addColourway(Colourway(patternId = id, name = name, targetCount = targetCount))
+        }
+    }
+
+    fun deleteColourway(id: Long) {
+        viewModelScope.launch { repo.deleteColourway(id) }
+    }
 
     fun setBucket(bucket: String?) {
         val p = state.value.pattern ?: return

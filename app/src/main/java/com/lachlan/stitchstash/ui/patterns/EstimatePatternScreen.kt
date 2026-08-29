@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +15,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lachlan.stitchstash.data.db.entities.Colourway
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.AddItemModal
+import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DetailScaffold
 import kotlin.math.roundToInt
 
@@ -26,6 +31,7 @@ fun EstimatePatternScreen(
     LaunchedEffect(patternId) { viewModel.load(patternId) }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val pattern = state.pattern
+    var showAddColourway by remember { mutableStateOf(false) }
 
     DetailScaffold(title = "How long?", onBack = onBack) {
         if (pattern == null) {
@@ -56,6 +62,113 @@ fun EstimatePatternScreen(
             SimilarSection(pattern.similarToPatternId, state.allPatterns.filter { it.id != pattern.id }, viewModel::setSimilarTo)
             HoursSection(pattern.estimateHours, viewModel::setHours)
             TextButton(onClick = viewModel::clearEstimate) { Text("Clear estimate (use overall average)") }
+            ColourwaysSection(
+                state.colourways,
+                onAdd = { showAddColourway = true },
+                onDelete = viewModel::deleteColourway,
+            )
+        }
+    }
+
+    if (showAddColourway) {
+        AddColourwayModal(
+            onAdd = { name, targetCount ->
+                viewModel.addColourway(name, targetCount)
+                showAddColourway = false
+            },
+            onDismiss = { showAddColourway = false },
+        )
+    }
+}
+
+@Composable
+private fun ColourwaysSection(colourways: List<Colourway>, onAdd: () -> Unit, onDelete: (Long) -> Unit) {
+    var pendingDelete by remember { mutableStateOf<Colourway?>(null) }
+
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "Colourways",
+                style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
+            )
+            if (colourways.isEmpty()) {
+                Text(
+                    "No colourways yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                colourways.forEach { cw ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "${cw.name} · ${cw.targetCount} to make",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = { pendingDelete = cw }) {
+                            Icon(
+                                Icons.Outlined.Delete,
+                                contentDescription = "Delete ${cw.name}",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+            TextButton(onClick = onAdd) { Text("+ Add colourway") }
+        }
+    }
+
+    pendingDelete?.let { cw ->
+        ConfirmDeleteDialog(
+            itemLabel = "\"${cw.name}\"",
+            message = "This removes the colourway and its logged completions. This can't be undone.",
+            onConfirm = {
+                onDelete(cw.id)
+                pendingDelete = null
+            },
+            onDismiss = { pendingDelete = null },
+        )
+    }
+}
+
+@Composable
+private fun AddColourwayModal(onAdd: (String, Int) -> Unit, onDismiss: () -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var targetCount by remember { mutableStateOf(1) }
+
+    AddItemModal(
+        title = "Add colourway",
+        onDismiss = onDismiss,
+        onConfirm = { onAdd(name, targetCount) },
+        confirmEnabled = name.isNotBlank(),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Colourway (e.g. Pink / Cream)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("How many to make: ", style = MaterialTheme.typography.bodyMedium)
+                FilledTonalIconButton(onClick = { if (targetCount > 1) targetCount -= 1 }) { Text("-") }
+                Text(
+                    text = targetCount.toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+                FilledTonalIconButton(onClick = { targetCount += 1 }) { Text("+") }
+            }
         }
     }
 }

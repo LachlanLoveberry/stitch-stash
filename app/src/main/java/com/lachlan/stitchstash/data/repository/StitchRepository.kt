@@ -70,6 +70,8 @@ class StitchRepository(private val db: StitchStashDatabase) {
 
     suspend fun updateColourway(colourway: Colourway) = db.colourwayDao().update(colourway)
 
+    suspend fun deleteColourway(id: Long) = db.colourwayDao().delete(id)
+
     // ---- Completions -------------------------------------------------------
 
     fun observeAllCompletions(): Flow<List<Completion>> = db.completionDao().observeAll()
