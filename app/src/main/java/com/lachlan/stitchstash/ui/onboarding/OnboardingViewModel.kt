@@ -19,8 +19,7 @@ class OnboardingViewModel(private val repo: StitchRepository) : ViewModel() {
         viewModelScope.launch {
             repo.ensureSettingsRow()
             if (marketDate != null) {
-                val name = marketName?.takeIf { it.isNotBlank() } ?: "Upcoming market"
-                repo.addMarket(name, marketDate)
+                repo.addMarket(marketName?.takeIf { it.isNotBlank() }, marketDate)
             }
             val current = AppSettings()
             repo.updateSettings(

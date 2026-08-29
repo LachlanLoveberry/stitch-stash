@@ -1,12 +1,17 @@
 package com.lachlan.stitchstash.ui.onboarding
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.SoftScaffold
@@ -130,6 +135,9 @@ private fun MarketStep(
 
 @Composable
 private fun HoursStep(weeklyHours: Float, onHoursChange: (Float) -> Unit) {
+    var showKeypadInput by remember { mutableStateOf(false) }
+    val underlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Realistic crochet hours per week?", style = MaterialTheme.typography.headlineLarge)
         Text(
@@ -141,7 +149,20 @@ private fun HoursStep(weeklyHours: Float, onHoursChange: (Float) -> Unit) {
         Text(
             text = "${(weeklyHours * 2).roundToInt() / 2f} hours",
             style = MaterialTheme.typography.displayMedium,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showKeypadInput = true }
+                .drawBehind {
+                    val strokeWidth = 1.dp.toPx()
+                    val y = size.height - strokeWidth
+                    drawLine(
+                        color = underlineColor,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = strokeWidth,
+                    )
+                }
+                .padding(bottom = 4.dp),
             textAlign = TextAlign.Center,
         )
 
@@ -152,6 +173,54 @@ private fun HoursStep(weeklyHours: Float, onHoursChange: (Float) -> Unit) {
             steps = 38,
         )
     }
+
+    if (showKeypadInput) {
+        HoursKeypadDialog(
+            initialHours = weeklyHours,
+            onDismiss = { showKeypadInput = false },
+            onConfirm = {
+                onHoursChange(it)
+                showKeypadInput = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun HoursKeypadDialog(
+    initialHours: Float,
+    onDismiss: () -> Unit,
+    onConfirm: (Float) -> Unit,
+) {
+    var text by remember { mutableStateOf(initialHours.let { if (it == it.roundToInt().toFloat()) it.roundToInt().toString() else it.toString() }) }
+    val parsed = text.toFloatOrNull()
+    val isValid = parsed != null && parsed in 0.5f..20f
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Hours per week") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Hours (0.5–20)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = text.isNotEmpty() && !isValid,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { parsed?.let { onConfirm(it.coerceIn(0.5f, 20f)) } },
+                enabled = isValid,
+            ) { Text("Set") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 @Composable
