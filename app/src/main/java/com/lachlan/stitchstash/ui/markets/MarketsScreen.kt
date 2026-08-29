@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lachlan.stitchstash.data.db.entities.Market
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.AddItemModal
 import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
@@ -130,30 +131,24 @@ private fun AddMarketDialog(onAdd: (String, LocalDate) -> Unit, onDismiss: () ->
     var date by remember { mutableStateOf<LocalDate?>(null) }
     var showPicker by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add market") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    singleLine = true,
-                )
-                OutlinedButton(onClick = { showPicker = true }) {
-                    Text(date?.toString() ?: "Pick date")
-                }
+    AddItemModal(
+        title = "Add market",
+        onDismiss = onDismiss,
+        onConfirm = { date?.let { onAdd(name, it) } },
+        confirmEnabled = name.isNotBlank() && date != null,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+            )
+            OutlinedButton(onClick = { showPicker = true }) {
+                Text(date?.toString() ?: "Pick date")
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { date?.let { onAdd(name, it) } },
-                enabled = name.isNotBlank() && date != null,
-            ) { Text("Add") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+        }
+    }
 
     if (showPicker) {
         val state = rememberDatePickerState()
