@@ -145,3 +145,7 @@ git push --tags
 GH Actions builds + publishes the APK. The in-app `UpdateChecker` polls the GitHub API on Home launch; if a newer tag exists, an "Update available" banner offers a deep link to the Releases page.
 
 Edit `OWNER` and `REPO` constants in `data/update/UpdateChecker.kt` if your GitHub repo isn't `lachlanloveberry/stitch-stash`.
+
+## Attributions
+
+<a href="https://www.flaticon.com/free-icons/crochet" title="crochet icons">Crochet icons created by Eucalyp - Flaticon</a>

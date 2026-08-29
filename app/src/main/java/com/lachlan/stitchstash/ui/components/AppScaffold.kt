@@ -1,5 +1,6 @@
 package com.lachlan.stitchstash.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,8 +33,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.lachlan.stitchstash.R
 import kotlinx.coroutines.launch
 
 sealed interface NavIcon {
@@ -155,6 +159,15 @@ private fun ScreenChrome(
                     NavIcon.None -> Spacer(Modifier.width(44.dp))
                 }
                 Spacer(Modifier.width(12.dp))
+                if (navIcon == NavIcon.Drawer) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_stitch_logo),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
                 Text(
                     title,
                     style = MaterialTheme.typography.headlineMedium,

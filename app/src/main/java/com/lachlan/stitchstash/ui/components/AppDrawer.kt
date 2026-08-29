@@ -1,5 +1,6 @@
 package com.lachlan.stitchstash.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Checklist
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Image
@@ -38,8 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.lachlan.stitchstash.R
 
 enum class TopLevelDestination(
     val route: String,
@@ -52,6 +57,7 @@ enum class TopLevelDestination(
     STICKERS("stickers", "Sticker book", Icons.Outlined.AutoAwesome),
     CARDS("cards", "Finish cards", Icons.Outlined.Image),
     MARKETS("markets", "Markets", Icons.Outlined.Storefront),
+    MARKET_PREP("market_prep", "Market prep", Icons.Outlined.Checklist),
     SETTINGS("settings", "Settings", Icons.Outlined.Settings),
 }
 
@@ -80,7 +86,14 @@ fun AppDrawerContent(
                         .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("S", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.headlineMedium)
+                    Image(
+                        painter = painterResource(R.drawable.ic_stitch_logo),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape),
+                    )
                 }
                 Spacer(Modifier.width(12.dp))
                 Column {
@@ -90,7 +103,7 @@ fun AppDrawerContent(
                         fontFamily = FontFamily.Serif,
                     )
                     Text(
-                        "Stitch by stitch",
+                        "Row by row",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -114,7 +127,7 @@ fun AppDrawerContent(
 
             Spacer(Modifier.weight(1f))
             Text(
-                "Made with ",
+                "Made with ♥ for her",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 8.dp),
