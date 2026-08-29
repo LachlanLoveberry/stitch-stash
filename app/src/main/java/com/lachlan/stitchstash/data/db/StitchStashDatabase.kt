@@ -9,6 +9,7 @@ import com.lachlan.stitchstash.data.db.dao.ColourwayDao
 import com.lachlan.stitchstash.data.db.dao.CompletionDao
 import com.lachlan.stitchstash.data.db.dao.FinishCardDao
 import com.lachlan.stitchstash.data.db.dao.MarketDao
+import com.lachlan.stitchstash.data.db.dao.MarketTodoDao
 import com.lachlan.stitchstash.data.db.dao.PatternDao
 import com.lachlan.stitchstash.data.db.dao.ScenarioDao
 import com.lachlan.stitchstash.data.db.dao.StickerDao
@@ -17,6 +18,7 @@ import com.lachlan.stitchstash.data.db.entities.Colourway
 import com.lachlan.stitchstash.data.db.entities.Completion
 import com.lachlan.stitchstash.data.db.entities.FinishCard
 import com.lachlan.stitchstash.data.db.entities.Market
+import com.lachlan.stitchstash.data.db.entities.MarketTodo
 import com.lachlan.stitchstash.data.db.entities.Pattern
 import com.lachlan.stitchstash.data.db.entities.Scenario
 import com.lachlan.stitchstash.data.db.entities.Sticker
@@ -31,8 +33,9 @@ import com.lachlan.stitchstash.data.db.entities.Sticker
         Sticker::class,
         Scenario::class,
         FinishCard::class,
+        MarketTodo::class,
     ],
-    version = 1,
+    version = 3,
     exportSchema = true,
 )
 abstract class StitchStashDatabase : RoomDatabase() {
@@ -40,6 +43,7 @@ abstract class StitchStashDatabase : RoomDatabase() {
     abstract fun colourwayDao(): ColourwayDao
     abstract fun completionDao(): CompletionDao
     abstract fun marketDao(): MarketDao
+    abstract fun marketTodoDao(): MarketTodoDao
     abstract fun appSettingsDao(): AppSettingsDao
     abstract fun stickerDao(): StickerDao
     abstract fun scenarioDao(): ScenarioDao
@@ -51,6 +55,6 @@ abstract class StitchStashDatabase : RoomDatabase() {
                 context.applicationContext,
                 StitchStashDatabase::class.java,
                 "stitch_stash.db",
-            ).build()
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3).build()
     }
 }

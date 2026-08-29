@@ -73,7 +73,7 @@ private fun MarketRow(market: Market, viewModel: MarketsViewModel) {
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                " ${market.name}",
+                " ${market.name ?: "Your market"}",
                 style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
                 textDecoration = if (market.isSkipped) TextDecoration.LineThrough else null,
             )
@@ -93,7 +93,7 @@ private fun MarketRow(market: Market, viewModel: MarketsViewModel) {
     }
     if (showDeleteConfirm) {
         ConfirmDeleteDialog(
-            itemLabel = "\"${market.name}\"",
+            itemLabel = market.name?.let { "\"$it\"" } ?: "this market",
             onConfirm = {
                 viewModel.delete(market)
                 showDeleteConfirm = false
@@ -135,13 +135,13 @@ private fun AddMarketDialog(onAdd: (String, LocalDate) -> Unit, onDismiss: () ->
         title = "Add market",
         onDismiss = onDismiss,
         onConfirm = { date?.let { onAdd(name, it) } },
-        confirmEnabled = name.isNotBlank() && date != null,
+        confirmEnabled = date != null,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text("Name (optional)") },
                 singleLine = true,
             )
             OutlinedButton(onClick = { showPicker = true }) {

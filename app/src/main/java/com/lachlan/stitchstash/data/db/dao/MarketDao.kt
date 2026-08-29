@@ -18,6 +18,12 @@ interface MarketDao {
     @Query("SELECT * FROM markets WHERE isSkipped = 0 AND dateEpochDay >= :todayEpochDay ORDER BY dateEpochDay ASC LIMIT 1")
     fun observeNextUpcoming(todayEpochDay: Long): Flow<Market?>
 
+    @Query("SELECT * FROM markets WHERE isSkipped = 0 AND reflectionPrompted = 0 AND dateEpochDay < :todayEpochDay ORDER BY dateEpochDay ASC LIMIT 1")
+    fun observeNextNeedingReflection(todayEpochDay: Long): Flow<Market?>
+
+    @Query("SELECT * FROM markets WHERE id = :id")
+    suspend fun getById(id: Long): Market?
+
     @Insert
     suspend fun insert(market: Market): Long
 

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 
 /**
  * Shared "Add X" modal shell used across the app (colourways, markets, scenarios, ...).
@@ -35,13 +36,17 @@ fun AddItemModal(
     confirmLabel: String = "Add",
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 4.dp,
             modifier = Modifier
-                .widthIn(max = 460.dp)
+                .padding(horizontal = 24.dp)
+                .widthIn(max = 560.dp)
                 .fillMaxWidth(),
         ) {
             Column(

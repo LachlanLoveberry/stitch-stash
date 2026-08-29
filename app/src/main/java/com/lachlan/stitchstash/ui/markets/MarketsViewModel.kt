@@ -17,8 +17,7 @@ class MarketsViewModel(private val repo: StitchRepository) : ViewModel() {
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun add(name: String, date: LocalDate) {
-        if (name.isBlank()) return
-        viewModelScope.launch { repo.addMarket(name.trim(), date) }
+        viewModelScope.launch { repo.addMarket(name.trim().takeIf { it.isNotBlank() }, date) }
     }
 
     fun toggleSkipped(market: Market) {
@@ -26,7 +25,9 @@ class MarketsViewModel(private val repo: StitchRepository) : ViewModel() {
     }
 
     fun rename(market: Market, newName: String) {
-        viewModelScope.launch { repo.updateMarket(market.copy(name = newName.trim())) }
+        viewModelScope.launch {
+            repo.updateMarket(market.copy(name = newName.trim().takeIf { it.isNotBlank() }))
+        }
     }
 
     fun reschedule(market: Market, newDate: LocalDate) {

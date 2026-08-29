@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+
 data class HomeState(
     val market: Market? = null,
     val patterns: List<PatternWithProgress> = emptyList(),
@@ -38,6 +39,31 @@ class HomeViewModel(private val repo: StitchRepository) : ViewModel() {
 
     fun deleteCompletion(id: Long) {
         viewModelScope.launch { repo.deleteCompletion(id) }
+    }
+
+    val pendingMarketReflection: StateFlow<Market?> =
+        repo.observeMarketNeedingReflection()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun onMarketReflectionDidNotGo(marketId: Long) {
+        viewModelScope.launch { repo.dismissMarketReflection(marketId) }
+    }
+
+    fun onMarketReflectionSaved(
+        marketId: Long,
+        howItWent: String?,
+        howItFelt: String?,
+        whatLearned: String?,
+    ) {
+        viewModelScope.launch {
+            repo.saveMarketReflection(marketId, attended = true, howItWent, howItFelt, whatLearned)
+        }
+    }
+
+    fun onMarketReflectionSkipped(marketId: Long) {
+        viewModelScope.launch {
+            repo.saveMarketReflection(marketId, attended = true, howItWent = null, howItFelt = null, whatLearned = null)
+        }
     }
 
     val state: StateFlow<HomeState> = combine(

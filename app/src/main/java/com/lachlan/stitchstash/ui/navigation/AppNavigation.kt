@@ -29,6 +29,7 @@ import com.lachlan.stitchstash.ui.finishcard.FinishCardGalleryScreen
 import com.lachlan.stitchstash.ui.finishcard.FinishCardScreen
 import com.lachlan.stitchstash.ui.home.HomeScreen
 import com.lachlan.stitchstash.ui.log.LogCompletionScreen
+import com.lachlan.stitchstash.ui.marketprep.MarketPrepScreen
 import com.lachlan.stitchstash.ui.markets.MarketsScreen
 import com.lachlan.stitchstash.ui.onboarding.OnboardingScreen
 import com.lachlan.stitchstash.ui.patterns.AddPatternScreen
@@ -140,6 +141,9 @@ fun AppNavigation() {
         }
         composable(TopLevelDestination.MARKETS.route) {
             MarketsScreen(onNavigate = navigateTopLevel)
+        }
+        composable(TopLevelDestination.MARKET_PREP.route) {
+            MarketPrepScreen(onNavigate = navigateTopLevel)
         }
         composable(TopLevelDestination.SETTINGS.route) {
             SettingsScreen(onNavigate = navigateTopLevel)

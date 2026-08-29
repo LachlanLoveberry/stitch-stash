@@ -56,7 +56,7 @@ data class CompletionDto(
 @Serializable
 data class MarketDto(
     val id: Long,
-    val name: String,
+    val name: String?,
     val dateEpochDay: Long,
     val isSkipped: Boolean,
     val createdAt: Long,

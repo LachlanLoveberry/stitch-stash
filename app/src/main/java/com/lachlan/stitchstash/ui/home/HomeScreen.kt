@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +49,7 @@ import com.lachlan.stitchstash.ui.components.DrawerScaffold
 import com.lachlan.stitchstash.ui.components.ProgressRing
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import com.lachlan.stitchstash.ui.components.UpdateBanner
+import com.lachlan.stitchstash.ui.markets.MarketReflectionDialog
 import com.lachlan.stitchstash.ui.stickers.StickerVisual
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -59,6 +61,18 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val pendingReflection by viewModel.pendingMarketReflection.collectAsStateWithLifecycle()
+
+    pendingReflection?.let { market ->
+        MarketReflectionDialog(
+            market = market,
+            onDismissDidNotGo = { viewModel.onMarketReflectionDidNotGo(market.id) },
+            onSaveReflection = { howItWent, howItFelt, whatLearned ->
+                viewModel.onMarketReflectionSaved(market.id, howItWent, howItFelt, whatLearned)
+            },
+            onSkipReflection = { viewModel.onMarketReflectionSkipped(market.id) },
+        )
+    }
 
     DrawerScaffold(
         title = "Stitch Stash",
@@ -89,7 +103,7 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            " ${market.name}",
+                            " ${market.name ?: "Your market"}",
                             style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.weight(1f),
                             fontFamily = FontFamily.Serif,
@@ -118,7 +132,7 @@ fun HomeScreen(
         }
 
         AnimatedVisibility(
-            visible = state.forecastVisible,
+            visible = state.forecastVisible && state.market != null,
             enter = fadeIn(animationSpec = tween(400)),
             exit = fadeOut(),
         ) {
@@ -241,27 +255,35 @@ private fun StickerHighlightCard(
             if (recent.isEmpty()) {
                 EmptyStickerSlots()
             } else {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    itemsIndexed(recent, key = { _, s -> s.id }) { index, sticker ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(animationSpec = tween(300, delayMillis = index * 60)) +
-                                slideInVertically(animationSpec = tween(320, delayMillis = index * 60)),
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                StickerVisual(
-                                    type = sticker.type,
-                                    size = 60.dp,
-                                    earned = true,
-                                    spin = false,
-                                )
-                                Spacer(Modifier.height(4.dp))
-                                Text(
-                                    StickerCatalog.get(sticker.type).title,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    maxLines = 1,
-                                )
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val spacing = 10.dp
+                    val slots = recent.size.coerceAtLeast(4)
+                    val itemSize = (maxWidth - spacing * (slots - 1)) / slots
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                        recent.forEachIndexed { index, sticker ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(animationSpec = tween(300, delayMillis = index * 60)) +
+                                    slideInVertically(animationSpec = tween(320, delayMillis = index * 60)),
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.width(itemSize),
+                                ) {
+                                    StickerVisual(
+                                        type = sticker.type,
+                                        size = itemSize,
+                                        earned = true,
+                                        spin = false,
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        StickerCatalog.get(sticker.type).title,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
                         }
                     }
@@ -274,26 +296,32 @@ private fun StickerHighlightCard(
 @Composable
 private fun EmptyStickerSlots() {
     Column {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            repeat(4) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        "?",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f),
-                    )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val spacing = 10.dp
+            val slotSize = (maxWidth - spacing * 3) / 4
+            val questionMarkSize = with(LocalDensity.current) { (slotSize * 0.45f).toSp() }
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                repeat(4) {
+                    Box(
+                        modifier = Modifier
+                            .size(slotSize)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.08f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            "?",
+                            fontSize = questionMarkSize,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.45f),
+                        )
+                    }
                 }
             }
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            "Earn your first one by logging a piece →",
+            "Earn your first one by logging a piece",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
         )

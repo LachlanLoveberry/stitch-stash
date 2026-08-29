@@ -10,6 +10,7 @@ import com.lachlan.stitchstash.data.repository.StitchRepository
 import com.lachlan.stitchstash.ui.finishcard.FinishCardViewModel
 import com.lachlan.stitchstash.ui.home.HomeViewModel
 import com.lachlan.stitchstash.ui.log.LogCompletionViewModel
+import com.lachlan.stitchstash.ui.marketprep.MarketPrepViewModel
 import com.lachlan.stitchstash.ui.markets.MarketsViewModel
 import com.lachlan.stitchstash.ui.onboarding.OnboardingViewModel
 import com.lachlan.stitchstash.ui.patterns.AddPatternViewModel
@@ -33,5 +34,6 @@ val AppViewModelFactory: ViewModelProvider.Factory = viewModelFactory {
     initializer { FinishCardViewModel(repository()) }
     initializer { PlanViewModel(repository()) }
     initializer { MarketsViewModel(repository()) }
+    initializer { MarketPrepViewModel(repository()) }
     initializer { SettingsViewModel(repository()) }
 }

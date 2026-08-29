@@ -1,0 +1,574 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "f5c19d0c85124724d683c0e2ac2c8125",
+    "entities": [
+      {
+        "tableName": "patterns",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `coverImageUri` TEXT, `ribblrUrl` TEXT, `designer` TEXT, `estimateHours` REAL, `estimateBucket` TEXT, `similarToPatternId` INTEGER, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "coverImageUri",
+            "columnName": "coverImageUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ribblrUrl",
+            "columnName": "ribblrUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "designer",
+            "columnName": "designer",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "estimateHours",
+            "columnName": "estimateHours",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "estimateBucket",
+            "columnName": "estimateBucket",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "similarToPatternId",
+            "columnName": "similarToPatternId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "colourways",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `patternId` INTEGER NOT NULL, `name` TEXT NOT NULL, `swatchHex` TEXT, `targetCount` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, FOREIGN KEY(`patternId`) REFERENCES `patterns`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "patternId",
+            "columnName": "patternId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "swatchHex",
+            "columnName": "swatchHex",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "targetCount",
+            "columnName": "targetCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_colourways_patternId",
+            "unique": false,
+            "columnNames": [
+              "patternId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_colourways_patternId` ON `${TABLE_NAME}` (`patternId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "patterns",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "patternId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "completions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `colourwayId` INTEGER NOT NULL, `completedAtEpochDay` INTEGER NOT NULL, `photoUri` TEXT, `notes` TEXT, `energyTag` TEXT, `createdAt` INTEGER NOT NULL, FOREIGN KEY(`colourwayId`) REFERENCES `colourways`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "colourwayId",
+            "columnName": "colourwayId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedAtEpochDay",
+            "columnName": "completedAtEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoUri",
+            "columnName": "photoUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "energyTag",
+            "columnName": "energyTag",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_completions_colourwayId",
+            "unique": false,
+            "columnNames": [
+              "colourwayId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_completions_colourwayId` ON `${TABLE_NAME}` (`colourwayId`)"
+          },
+          {
+            "name": "index_completions_completedAtEpochDay",
+            "unique": false,
+            "columnNames": [
+              "completedAtEpochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_completions_completedAtEpochDay` ON `${TABLE_NAME}` (`completedAtEpochDay`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "colourways",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "colourwayId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "markets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT, `dateEpochDay` INTEGER NOT NULL, `isSkipped` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `reflectionPrompted` INTEGER NOT NULL, `attended` INTEGER, `howItWent` TEXT, `howItFelt` TEXT, `whatLearned` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateEpochDay",
+            "columnName": "dateEpochDay",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSkipped",
+            "columnName": "isSkipped",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reflectionPrompted",
+            "columnName": "reflectionPrompted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attended",
+            "columnName": "attended",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "howItWent",
+            "columnName": "howItWent",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "howItFelt",
+            "columnName": "howItFelt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "whatLearned",
+            "columnName": "whatLearned",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "app_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `weeklyHours` REAL NOT NULL, `targetPieces` INTEGER NOT NULL, `forecastVisible` INTEGER NOT NULL, `weeklyRecapEnabled` INTEGER NOT NULL, `stickerBookEnabled` INTEGER NOT NULL, `finishCardBorderStyle` TEXT NOT NULL, `avgHoursPerPieceSeed` REAL NOT NULL, `driveBackupEnabled` INTEGER NOT NULL, `driveFolderId` TEXT, `lastBackupAt` INTEGER, `onboardingComplete` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weeklyHours",
+            "columnName": "weeklyHours",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetPieces",
+            "columnName": "targetPieces",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "forecastVisible",
+            "columnName": "forecastVisible",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "weeklyRecapEnabled",
+            "columnName": "weeklyRecapEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stickerBookEnabled",
+            "columnName": "stickerBookEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finishCardBorderStyle",
+            "columnName": "finishCardBorderStyle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "avgHoursPerPieceSeed",
+            "columnName": "avgHoursPerPieceSeed",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driveBackupEnabled",
+            "columnName": "driveBackupEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "driveFolderId",
+            "columnName": "driveFolderId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastBackupAt",
+            "columnName": "lastBackupAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "onboardingComplete",
+            "columnName": "onboardingComplete",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "stickers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `earnedAt` INTEGER NOT NULL, `relatedCompletionId` INTEGER, `relatedPatternId` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "earnedAt",
+            "columnName": "earnedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relatedCompletionId",
+            "columnName": "relatedCompletionId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "relatedPatternId",
+            "columnName": "relatedPatternId",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "scenarios",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `marketId` INTEGER, `customDateEpochDay` INTEGER, `targetPieces` INTEGER, `weeklyHours` REAL, `lockedKey` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "customDateEpochDay",
+            "columnName": "customDateEpochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "targetPieces",
+            "columnName": "targetPieces",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "weeklyHours",
+            "columnName": "weeklyHours",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "lockedKey",
+            "columnName": "lockedKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "finish_cards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `completionId` INTEGER NOT NULL, `imagePath` TEXT NOT NULL, `borderStyle` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completionId",
+            "columnName": "completionId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imagePath",
+            "columnName": "imagePath",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "borderStyle",
+            "columnName": "borderStyle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "market_todos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `marketId` INTEGER NOT NULL, `text` TEXT NOT NULL, `isDone` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "marketId",
+            "columnName": "marketId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDone",
+            "columnName": "isDone",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_market_todos_marketId",
+            "unique": false,
+            "columnNames": [
+              "marketId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_market_todos_marketId` ON `${TABLE_NAME}` (`marketId`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f5c19d0c85124724d683c0e2ac2c8125')"
+    ]
+  }
+}

@@ -6,6 +6,7 @@ import com.lachlan.stitchstash.data.db.entities.Colourway
 import com.lachlan.stitchstash.data.db.entities.Completion
 import com.lachlan.stitchstash.data.db.entities.FinishCard
 import com.lachlan.stitchstash.data.db.entities.Market
+import com.lachlan.stitchstash.data.db.entities.MarketTodo
 import com.lachlan.stitchstash.data.db.entities.Pattern
 import com.lachlan.stitchstash.data.db.entities.Scenario
 import com.lachlan.stitchstash.data.db.entities.Sticker
@@ -42,12 +43,52 @@ class StitchRepository(private val db: StitchStashDatabase) {
 
     fun observeAllMarkets(): Flow<List<Market>> = db.marketDao().observeAll()
 
-    suspend fun addMarket(name: String, date: LocalDate): Long =
+    suspend fun addMarket(name: String?, date: LocalDate): Long =
         db.marketDao().insert(Market(name = name, dateEpochDay = date.toEpochDay()))
 
     suspend fun updateMarket(market: Market) = db.marketDao().update(market)
 
     suspend fun deleteMarket(id: Long) = db.marketDao().delete(id)
+
+    fun observeMarketNeedingReflection(today: LocalDate = LocalDate.now()): Flow<Market?> =
+        db.marketDao().observeNextNeedingReflection(today.toEpochDay())
+
+    suspend fun saveMarketReflection(
+        marketId: Long,
+        attended: Boolean,
+        howItWent: String?,
+        howItFelt: String?,
+        whatLearned: String?,
+    ) {
+        val market = db.marketDao().getById(marketId) ?: return
+        db.marketDao().update(
+            market.copy(
+                reflectionPrompted = true,
+                attended = attended,
+                howItWent = howItWent?.trim()?.ifBlank { null },
+                howItFelt = howItFelt?.trim()?.ifBlank { null },
+                whatLearned = whatLearned?.trim()?.ifBlank { null },
+            ),
+        )
+    }
+
+    suspend fun dismissMarketReflection(marketId: Long) {
+        val market = db.marketDao().getById(marketId) ?: return
+        db.marketDao().update(market.copy(reflectionPrompted = true, attended = false))
+    }
+
+    // ---- Market prep todos ---------------------------------------------------
+
+    fun observeMarketTodos(marketId: Long): Flow<List<MarketTodo>> =
+        db.marketTodoDao().observeForMarket(marketId)
+
+    suspend fun addMarketTodo(marketId: Long, text: String): Long =
+        db.marketTodoDao().insert(MarketTodo(marketId = marketId, text = text))
+
+    suspend fun toggleMarketTodo(todo: MarketTodo) =
+        db.marketTodoDao().update(todo.copy(isDone = !todo.isDone))
+
+    suspend fun deleteMarketTodo(id: Long) = db.marketTodoDao().delete(id)
 
     // ---- Patterns ----------------------------------------------------------
 
