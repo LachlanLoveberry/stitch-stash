@@ -90,7 +90,7 @@ fun AppDrawerContent(
                         fontFamily = FontFamily.Serif,
                     )
                     Text(
-                        "Hook by hook",
+                        "Stitch by stitch",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

@@ -33,7 +33,8 @@ fun CelebrationDialog(
                 tonalElevation = 4.dp,
                 modifier = Modifier
                     .padding(16.dp)
-                    .widthIn(max = 380.dp),
+                    .widthIn(max = 460.dp)
+                    .fillMaxWidth(),
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -105,15 +106,27 @@ fun CelebrationDialog(
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp),
-                        ) { Text("Done") }
+                                .heightIn(min = 48.dp),
+                        ) {
+                            Text(
+                                "Done",
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                            )
+                        }
                         Button(
                             onClick = onCreateCard,
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(48.dp),
-                        ) { Text("Make card") }
+                                .heightIn(min = 48.dp),
+                        ) {
+                            Text(
+                                "Make card",
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
+                            )
+                        }
                     }
                 }
             }
