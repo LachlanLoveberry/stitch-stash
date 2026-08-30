@@ -16,6 +16,7 @@ import com.lachlan.stitchstash.domain.model.PatternWithProgress
 import com.lachlan.stitchstash.domain.stickers.StickerCatalog
 import com.lachlan.stitchstash.domain.stickers.StickerContext
 import com.lachlan.stitchstash.domain.stickers.StickerEarner
+import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -34,7 +35,14 @@ class StitchRepository(private val db: StitchStashDatabase) {
         }
     }
 
-    suspend fun updateSettings(settings: AppSettings) = db.appSettingsDao().upsert(settings)
+    suspend fun updateSettings(settings: AppSettings) {
+        require(settings.weeklyHours.isFinite() && settings.weeklyHours >= 0f) { "weeklyHours must be finite and non-negative" }
+        require(settings.targetPieces >= 0) { "targetPieces must be non-negative" }
+        require(settings.avgHoursPerPieceSeed.isFinite() && settings.avgHoursPerPieceSeed >= 0f) {
+            "avgHoursPerPieceSeed must be finite and non-negative"
+        }
+        db.appSettingsDao().upsert(settings)
+    }
 
     // ---- Markets -----------------------------------------------------------
 
@@ -94,7 +102,10 @@ class StitchRepository(private val db: StitchStashDatabase) {
 
     fun observePatterns(): Flow<List<Pattern>> = db.patternDao().observeAll()
 
-    suspend fun addPattern(pattern: Pattern): Long = db.patternDao().insert(pattern)
+    suspend fun addPattern(pattern: Pattern): Long {
+        require(pattern.name.isNotBlank()) { "pattern name must not be blank" }
+        return db.patternDao().insert(pattern)
+    }
 
     suspend fun updatePattern(pattern: Pattern) = db.patternDao().update(pattern)
 
@@ -107,7 +118,11 @@ class StitchRepository(private val db: StitchStashDatabase) {
     fun observeColourwaysForPattern(patternId: Long): Flow<List<Colourway>> =
         db.colourwayDao().observeForPattern(patternId)
 
-    suspend fun addColourway(colourway: Colourway): Long = db.colourwayDao().insert(colourway)
+    suspend fun addColourway(colourway: Colourway): Long {
+        require(colourway.name.isNotBlank()) { "colourway name must not be blank" }
+        require(colourway.targetCount >= 0) { "targetCount must be non-negative" }
+        return db.colourwayDao().insert(colourway)
+    }
 
     suspend fun updateColourway(colourway: Colourway) = db.colourwayDao().update(colourway)
 
@@ -130,7 +145,10 @@ class StitchRepository(private val db: StitchStashDatabase) {
      * Inserts a completion and evaluates which stickers it earns. Returns the new
      * completion id together with any earned stickers (already persisted).
      */
-    suspend fun addCompletionAndEarnStickers(completion: Completion): CompletionWithEarnings {
+    suspend fun addCompletionAndEarnStickers(completion: Completion): CompletionWithEarnings =
+        db.withTransaction { addCompletionAndEarnStickersInTransaction(completion) }
+
+    private suspend fun addCompletionAndEarnStickersInTransaction(completion: Completion): CompletionWithEarnings {
         val previousTotal = db.completionDao().getTotalCount()
         val priorMostRecentDay: Long? = if (previousTotal > 0) {
             // Most recent before this insert

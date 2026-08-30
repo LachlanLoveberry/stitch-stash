@@ -51,6 +51,10 @@ object BackupSerializer {
 
     suspend fun import(db: StitchStashDatabase, rawJson: String): RestoreSummary {
         val backup = json.decodeFromString(BackupFile.serializer(), rawJson)
+        require(backup.schemaVersion <= BACKUP_SCHEMA_VERSION) {
+            "Backup schema version ${backup.schemaVersion} is newer than this app supports " +
+                "($BACKUP_SCHEMA_VERSION) — update the app before restoring this backup."
+        }
         // Naive replace strategy: assumes a fresh DB. For restore over existing data,
         // wipe local first (a Phase 6+ TODO).
         // Insert in dependency order; primary-key collisions use REPLACE via raw insert.

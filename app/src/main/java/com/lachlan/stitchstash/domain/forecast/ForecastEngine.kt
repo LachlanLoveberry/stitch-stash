@@ -76,7 +76,7 @@ object ForecastEngine {
         for (p in patterns) {
             val hoursPerPiece = estimateHoursPerPiece(p.pattern, observedAvgHoursPerPiece, globalSeed)
             for (cw in p.colourways) {
-                repeat(cw.remaining) {
+                repeat(cw.remaining.coerceAtLeast(0)) {
                     if (hoursLeft >= hoursPerPiece) {
                         hoursLeft -= hoursPerPiece
                         piecesAchievable += 1

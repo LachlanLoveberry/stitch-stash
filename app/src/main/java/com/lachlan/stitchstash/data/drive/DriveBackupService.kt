@@ -68,7 +68,7 @@ class DriveBackupService(
     suspend fun downloadBackup(fileId: String): String = withContext(Dispatchers.IO) {
         val out = ByteArrayOutputStream()
         drive.files().get(fileId).executeMediaAndDownloadTo(out)
-        out.toString(Charsets.UTF_8)
+        String(out.toByteArray(), Charsets.UTF_8)
     }
 
     suspend fun deleteBackup(fileId: String) = withContext(Dispatchers.IO) {
