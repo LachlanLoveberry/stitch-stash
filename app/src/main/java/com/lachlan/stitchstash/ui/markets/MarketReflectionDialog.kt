@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lachlan.stitchstash.data.db.entities.Market
+import com.lachlan.stitchstash.ui.components.DialogActionRow
 
 /**
  * Post-market check-in: asks whether the maker went, then invites (all optional)
@@ -91,19 +92,16 @@ private fun AttendedStep(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+        DialogActionRow {
             OutlinedButton(
                 onClick = onDidNotGo,
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                modifier = Modifier.heightIn(min = 48.dp),
             ) { Text("Not this time") }
             Button(
                 onClick = onWent,
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                modifier = Modifier.heightIn(min = 48.dp),
             ) { Text("I went!") }
         }
     }
@@ -154,18 +152,15 @@ private fun ReflectionStep(
             onValueChange = { whatLearned = it },
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+        DialogActionRow {
             TextButton(
                 onClick = onSkip,
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                modifier = Modifier.heightIn(min = 48.dp),
             ) { Text("Skip for now") }
             Button(
                 onClick = { onSave(howItWent, howItFelt, whatLearned) },
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                modifier = Modifier.heightIn(min = 48.dp),
             ) { Text("Save reflection") }
         }
     }

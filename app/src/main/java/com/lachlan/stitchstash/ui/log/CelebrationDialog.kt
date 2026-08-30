@@ -16,6 +16,7 @@ import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.domain.stickers.StickerCatalog
 import com.lachlan.stitchstash.ui.components.ConfettiBurst
+import com.lachlan.stitchstash.ui.components.DialogActionRow
 import com.lachlan.stitchstash.ui.stickers.StickerVisual
 
 @Composable
@@ -97,35 +98,24 @@ fun CelebrationDialog(
 
                     Spacer(Modifier.height(4.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
+                    // "Make card" only makes sense once there's a photo to put on it —
+                    // otherwise the finish card is just an empty placeholder box.
+                    DialogActionRow {
                         OutlinedButton(
                             onClick = onDismiss,
                             shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 48.dp),
+                            modifier = Modifier.heightIn(min = 48.dp),
                         ) {
-                            Text(
-                                "Done",
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                            )
+                            Text("Done")
                         }
-                        Button(
-                            onClick = onCreateCard,
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 48.dp),
-                        ) {
-                            Text(
-                                "Make card",
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                            )
+                        if (data.photoPath != null) {
+                            Button(
+                                onClick = onCreateCard,
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.heightIn(min = 48.dp),
+                            ) {
+                                Text("Make card")
+                            }
                         }
                     }
                 }

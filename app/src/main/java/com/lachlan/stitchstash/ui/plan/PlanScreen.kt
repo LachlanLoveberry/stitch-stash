@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +37,7 @@ import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.AddItemModal
 import com.lachlan.stitchstash.ui.components.TopLevelDestination
 import com.lachlan.stitchstash.ui.components.DrawerScaffold
+import com.lachlan.stitchstash.ui.components.LabeledSliderField
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -527,20 +531,14 @@ private fun HoursPicker(
         onDismissRequest = onCancel,
         title = { Text("Hours per week") },
         text = {
-            Column {
-                Text(
-                    "${formatHours(value)} hours",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-                Slider(
-                    value = value,
-                    onValueChange = { value = it },
-                    valueRange = 0.5f..30f,
-                    steps = 58,
-                )
-            }
+            LabeledSliderField(
+                label = "Hours",
+                value = value,
+                onValueChange = { value = it },
+                valueRange = 0.5f..30f,
+                steps = 58,
+                valueText = { "${formatHours(it)} hours" },
+            )
         },
         confirmButton = { TextButton(onClick = { onConfirm(value) }) { Text("OK") } },
         dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
@@ -563,14 +561,18 @@ private fun NumberPickerSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                FilledTonalIconButton(onClick = { if (value > 0) value -= 1 }) { Text("-") }
+                FilledTonalIconButton(onClick = { if (value > 0) value -= 1 }) {
+                    Icon(Icons.Filled.Remove, contentDescription = "Decrease $label")
+                }
                 Text(
                     text = if (value == 0) "—" else value.toString(),
                     style = MaterialTheme.typography.displayMedium,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                 )
-                FilledTonalIconButton(onClick = { value += 1 }) { Text("+") }
+                FilledTonalIconButton(onClick = { value += 1 }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Increase $label")
+                }
             }
         },
         confirmButton = { TextButton(onClick = { onConfirm(value) }) { Text("OK") } },

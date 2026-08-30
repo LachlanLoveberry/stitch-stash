@@ -46,8 +46,12 @@ class EstimatePatternViewModel(private val repo: StitchRepository) : ViewModel()
 
     fun addColourway(name: String, targetCount: Int) {
         val id = patternId.value ?: return
+        val trimmedName = name.trim()
+        if (trimmedName.isBlank()) return
         viewModelScope.launch {
-            repo.addColourway(Colourway(patternId = id, name = name, targetCount = targetCount))
+            repo.addColourway(
+                Colourway(patternId = id, name = trimmedName, targetCount = targetCount.coerceAtLeast(0)),
+            )
         }
     }
 

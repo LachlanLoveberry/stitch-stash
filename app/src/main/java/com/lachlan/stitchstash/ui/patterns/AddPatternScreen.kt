@@ -10,9 +10,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +29,16 @@ import coil.compose.AsyncImage
 import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.DetailScaffold
 
+/** Flattens each ColourwayInput's fields into a single saveable list so the row list survives rotation. */
+private val ColourwayInputListSaver: Saver<List<ColourwayInput>, ArrayList<Any?>> = Saver(
+    save = { list -> ArrayList(list.flatMap { listOf(it.name, it.swatchHex, it.targetCount) }) },
+    restore = { flat ->
+        flat.chunked(3).map { (name, swatchHex, targetCount) ->
+            ColourwayInput(name as String, swatchHex as String?, targetCount as Int)
+        }
+    },
+)
+
 @Composable
 fun AddPatternScreen(
     onDone: () -> Unit,
@@ -32,13 +46,14 @@ fun AddPatternScreen(
     viewModel: AddPatternViewModel = viewModel(factory = AppViewModelFactory),
 ) {
     val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
-    var designer by remember { mutableStateOf<String?>(null) }
-    var coverUri by remember { mutableStateOf<Uri?>(null) }
-    var preloadedCoverPath by remember { mutableStateOf<String?>(null) }
-    var ribblrUrl by remember { mutableStateOf<String?>(null) }
+    var name by rememberSaveable { mutableStateOf("") }
+    var designer by rememberSaveable { mutableStateOf<String?>(null) }
+    var coverUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var preloadedCoverPath by rememberSaveable { mutableStateOf<String?>(null) }
+    var ribblrUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var showImportDialog by remember { mutableStateOf(false) }
-    var colourways by remember {
+    var pendingImportResult by remember { mutableStateOf<RibblrImportResult?>(null) }
+    var colourways by rememberSaveable(stateSaver = ColourwayInputListSaver) {
         mutableStateOf(
             listOf(
                 ColourwayInput(name = "", targetCount = 1),
@@ -77,7 +92,7 @@ fun AddPatternScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            designer?.let {
+            designer?.takeIf { it.isNotBlank() }?.let {
                 Text(
                     "by $it",
                     style = MaterialTheme.typography.bodyMedium,
@@ -135,12 +150,16 @@ fun AddPatternScreen(
             importState = importState,
             onImport = { url ->
                 viewModel.importFromRibblr(context, url) { result ->
-                    name = result.name
-                    designer = result.designer
-                    preloadedCoverPath = result.localCoverPath
-                    coverUri = null
-                    ribblrUrl = result.sourceUrl
                     showImportDialog = false
+                    if (name.isNotBlank() && name.trim() != result.name.trim()) {
+                        pendingImportResult = result
+                    } else {
+                        name = result.name
+                        designer = result.designer
+                        preloadedCoverPath = result.localCoverPath
+                        coverUri = null
+                        ribblrUrl = result.sourceUrl
+                    }
                 }
             },
             onDismiss = {
@@ -149,6 +168,46 @@ fun AddPatternScreen(
             },
         )
     }
+
+    pendingImportResult?.let { result ->
+        ReplaceWithImportDialog(
+            typedName = name,
+            importedName = result.name,
+            onReplace = {
+                name = result.name
+                designer = result.designer
+                preloadedCoverPath = result.localCoverPath
+                coverUri = null
+                ribblrUrl = result.sourceUrl
+                pendingImportResult = null
+            },
+            onKeepTyped = { pendingImportResult = null },
+        )
+    }
+}
+
+@Composable
+private fun ReplaceWithImportDialog(
+    typedName: String,
+    importedName: String,
+    onReplace: () -> Unit,
+    onKeepTyped: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onKeepTyped,
+        title = { Text("Replace your entry?") },
+        text = {
+            Text(
+                "You already typed \"$typedName\". Importing \"$importedName\" from Ribblr will replace the name, designer, and cover photo you've entered so far.",
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onReplace) { Text("Use imported") }
+        },
+        dismissButton = {
+            TextButton(onClick = onKeepTyped) { Text("Keep mine") }
+        },
+    )
 }
 
 @Composable
@@ -271,7 +330,7 @@ private fun ColourwayRow(
                 Text("How many to make: ", style = MaterialTheme.typography.bodyMedium)
                 FilledTonalIconButton(onClick = {
                     if (input.targetCount > 1) onChange(input.copy(targetCount = input.targetCount - 1))
-                }) { Text("-") }
+                }) { Icon(Icons.Filled.Remove, contentDescription = "Decrease how many to make") }
                 Text(
                     text = input.targetCount.toString(),
                     style = MaterialTheme.typography.titleLarge,
@@ -279,7 +338,7 @@ private fun ColourwayRow(
                 )
                 FilledTonalIconButton(onClick = {
                     onChange(input.copy(targetCount = input.targetCount + 1))
-                }) { Text("+") }
+                }) { Icon(Icons.Filled.Add, contentDescription = "Increase how many to make") }
                 Spacer(Modifier.weight(1f))
                 if (onRemove != null) {
                     TextButton(onClick = onRemove) { Text("Remove") }

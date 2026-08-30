@@ -2,6 +2,9 @@ package com.lachlan.stitchstash.ui.onboarding
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lachlan.stitchstash.ui.AppViewModelFactory
+import com.lachlan.stitchstash.ui.components.DialogActionRow
+import com.lachlan.stitchstash.ui.components.LabeledSliderField
 import com.lachlan.stitchstash.ui.components.SoftScaffold
 import java.time.Instant
 import java.time.LocalDate
@@ -58,10 +63,7 @@ fun OnboardingScreen(
 
         Spacer(Modifier.weight(1f))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+        DialogActionRow {
             TextButton(
                 onClick = {
                     if (step < 2) step += 1
@@ -69,7 +71,6 @@ fun OnboardingScreen(
                         marketName, marketDate, weeklyHours, targetPieces, onComplete,
                     )
                 },
-                modifier = Modifier.weight(1f),
             ) {
                 Text("Skip for now")
             }
@@ -80,7 +81,6 @@ fun OnboardingScreen(
                         marketName, marketDate, weeklyHours, targetPieces, onComplete,
                     )
                 },
-                modifier = Modifier.weight(1f),
             ) {
                 Text(if (step < 2) "Next" else "Finish")
             }
@@ -135,9 +135,6 @@ private fun MarketStep(
 
 @Composable
 private fun HoursStep(weeklyHours: Float, onHoursChange: (Float) -> Unit) {
-    var showKeypadInput by remember { mutableStateOf(false) }
-    val underlineColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Realistic crochet hours per week?", style = MaterialTheme.typography.headlineLarge)
         Text(
@@ -146,81 +143,15 @@ private fun HoursStep(weeklyHours: Float, onHoursChange: (Float) -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        Text(
-            text = "${(weeklyHours * 2).roundToInt() / 2f} hours",
-            style = MaterialTheme.typography.displayMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showKeypadInput = true }
-                .drawBehind {
-                    val strokeWidth = 1.dp.toPx()
-                    val y = size.height - strokeWidth
-                    drawLine(
-                        color = underlineColor,
-                        start = Offset(0f, y),
-                        end = Offset(size.width, y),
-                        strokeWidth = strokeWidth,
-                    )
-                }
-                .padding(bottom = 4.dp),
-            textAlign = TextAlign.Center,
-        )
-
-        Slider(
+        LabeledSliderField(
+            label = "Weekly hours",
             value = weeklyHours,
             onValueChange = onHoursChange,
             valueRange = 0.5f..20f,
             steps = 38,
+            valueText = { "${(it * 2).roundToInt() / 2f} hours" },
         )
     }
-
-    if (showKeypadInput) {
-        HoursKeypadDialog(
-            initialHours = weeklyHours,
-            onDismiss = { showKeypadInput = false },
-            onConfirm = {
-                onHoursChange(it)
-                showKeypadInput = false
-            },
-        )
-    }
-}
-
-@Composable
-private fun HoursKeypadDialog(
-    initialHours: Float,
-    onDismiss: () -> Unit,
-    onConfirm: (Float) -> Unit,
-) {
-    var text by remember { mutableStateOf(initialHours.let { if (it == it.roundToInt().toFloat()) it.roundToInt().toString() else it.toString() }) }
-    val parsed = text.toFloatOrNull()
-    val isValid = parsed != null && parsed in 0.5f..20f
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Hours per week") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text("Hours (0.5–20)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = text.isNotEmpty() && !isValid,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { parsed?.let { onConfirm(it.coerceIn(0.5f, 20f)) } },
-                enabled = isValid,
-            ) { Text("Set") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        },
-    )
 }
 
 @Composable
@@ -240,14 +171,16 @@ private fun TargetStep(targetPieces: Int, onTargetChange: (Int) -> Unit) {
         ) {
             FilledTonalIconButton(
                 onClick = { if (targetPieces > 0) onTargetChange(targetPieces - 1) },
-            ) { Text("-") }
+            ) { Icon(Icons.Filled.Remove, contentDescription = "Decrease target pieces") }
             Text(
                 text = if (targetPieces == 0) "—" else targetPieces.toString(),
                 style = MaterialTheme.typography.displayMedium,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
             )
-            FilledTonalIconButton(onClick = { onTargetChange(targetPieces + 1) }) { Text("+") }
+            FilledTonalIconButton(onClick = { onTargetChange(targetPieces + 1) }) {
+                Icon(Icons.Filled.Add, contentDescription = "Increase target pieces")
+            }
         }
     }
 }

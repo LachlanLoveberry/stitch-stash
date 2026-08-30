@@ -3,7 +3,6 @@ package com.lachlan.stitchstash.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -62,20 +61,17 @@ fun AddItemModal(
 
                 content()
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
+                DialogActionRow {
                     OutlinedButton(
                         onClick = onDismiss,
                         shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        modifier = Modifier.heightIn(min = 48.dp),
                     ) { Text("Cancel") }
                     Button(
                         onClick = onConfirm,
                         enabled = confirmEnabled,
                         shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        modifier = Modifier.heightIn(min = 48.dp),
                     ) { Text(confirmLabel) }
                 }
             }

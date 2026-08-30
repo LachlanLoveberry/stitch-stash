@@ -17,6 +17,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.DetailScaffold
+import com.lachlan.stitchstash.ui.components.DialogActionRow
 import java.io.File
 
 @Composable
@@ -71,7 +72,7 @@ fun FinishCardScreen(
 
         Spacer(Modifier.weight(1f))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        DialogActionRow {
             OutlinedButton(
                 onClick = {
                     val path = state.imagePath ?: return@OutlinedButton
@@ -80,17 +81,13 @@ fun FinishCardScreen(
                 },
                 shape = RoundedCornerShape(20.dp),
                 enabled = state.imagePath != null && !state.rendering,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
+                modifier = Modifier.heightIn(min = 52.dp),
             ) { Text("Share") }
             Button(
                 onClick = { viewModel.saveCurrent(completionId) },
                 shape = RoundedCornerShape(20.dp),
                 enabled = state.imagePath != null && !state.rendering && !state.saved,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
+                modifier = Modifier.heightIn(min = 52.dp),
             ) { Text(if (state.saved) "Saved " else "Save") }
         }
     }

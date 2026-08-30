@@ -6,6 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +22,7 @@ import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.AddItemModal
 import com.lachlan.stitchstash.ui.components.ConfirmDeleteDialog
 import com.lachlan.stitchstash.ui.components.DetailScaffold
+import com.lachlan.stitchstash.ui.components.LabeledSliderField
 import kotlin.math.roundToInt
 
 @Composable
@@ -161,13 +164,17 @@ private fun AddColourwayModal(onAdd: (String, Int) -> Unit, onDismiss: () -> Uni
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("How many to make: ", style = MaterialTheme.typography.bodyMedium)
-                FilledTonalIconButton(onClick = { if (targetCount > 1) targetCount -= 1 }) { Text("-") }
+                FilledTonalIconButton(onClick = { if (targetCount > 1) targetCount -= 1 }) {
+                    Icon(Icons.Filled.Remove, contentDescription = "Decrease how many to make")
+                }
                 Text(
                     text = targetCount.toString(),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
-                FilledTonalIconButton(onClick = { targetCount += 1 }) { Text("+") }
+                FilledTonalIconButton(onClick = { targetCount += 1 }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Increase how many to make")
+                }
             }
         }
     }
@@ -251,15 +258,13 @@ private fun HoursSection(current: Float?, onSet: (Float?) -> Unit) {
                 style = MaterialTheme.typography.titleLarge.copy(fontFamily = FontFamily.Serif),
             )
             var value by remember(current) { mutableStateOf(current ?: 4f) }
-            Text(
-                "${(value * 2).roundToInt() / 2f}h per piece",
-                style = MaterialTheme.typography.headlineMedium,
-            )
-            Slider(
+            LabeledSliderField(
+                label = "Hours per piece",
                 value = value,
                 onValueChange = { value = it },
                 valueRange = 0.5f..30f,
                 steps = 58,
+                valueText = { "${(it * 2).roundToInt() / 2f}h" },
                 onValueChangeFinished = { onSet(value) },
             )
         }
