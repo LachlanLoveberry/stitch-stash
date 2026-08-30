@@ -2,7 +2,7 @@ package com.lachlan.stitchstash.data.backup
 
 import kotlinx.serialization.Serializable
 
-const val BACKUP_SCHEMA_VERSION = 1
+const val BACKUP_SCHEMA_VERSION = 2
 
 @Serializable
 data class BackupFile(
@@ -13,6 +13,7 @@ data class BackupFile(
     val colourways: List<ColourwayDto>,
     val completions: List<CompletionDto>,
     val markets: List<MarketDto>,
+    val marketTodos: List<MarketTodoDto> = emptyList(),
     val stickers: List<StickerDto>,
     val scenarios: List<ScenarioDto>,
     val finishCards: List<FinishCardDto>,
@@ -59,6 +60,20 @@ data class MarketDto(
     val name: String?,
     val dateEpochDay: Long,
     val isSkipped: Boolean,
+    val createdAt: Long,
+    val reflectionPrompted: Boolean = false,
+    val attended: Boolean? = null,
+    val howItWent: String? = null,
+    val howItFelt: String? = null,
+    val whatLearned: String? = null,
+)
+
+@Serializable
+data class MarketTodoDto(
+    val id: Long,
+    val marketId: Long,
+    val text: String,
+    val isDone: Boolean,
     val createdAt: Long,
 )
 

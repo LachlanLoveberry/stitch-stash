@@ -50,6 +50,14 @@ fun SettingsScreen(
     var folderInput by remember { mutableStateOf("") }
     var showFolderDialog by remember { mutableStateOf(false) }
 
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri -> uri?.let { viewModel.exportToUri(context, it) } }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> uri?.let { viewModel.importFromUri(context, it) } }
+
     DrawerScaffold(
         title = "Settings",
         currentRoute = TopLevelDestination.SETTINGS.route,
@@ -167,12 +175,28 @@ fun SettingsScreen(
                     }
                     OutlinedButton(onClick = { viewModel.signOut(context) }) { Text("Sign out") }
                 }
+            }
 
-                Spacer(Modifier.height(12.dp))
-                OutlinedButton(onClick = {
-                    viewModel.exportToDevice(context) { }
-                }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Export a copy to this device")
+            SectionCard("Backup file") {
+                Text(
+                    "Save a copy to a file you choose, or bring one back in — handy when moving to a new " +
+                        "install of the app (a new signed build won't update in place over an old one).",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = {
+                        exportLauncher.launch(viewModel.defaultExportFileName())
+                    }) { Text("Export to file") }
+                    OutlinedButton(onClick = {
+                        importLauncher.launch(arrayOf("application/json"))
+                    }) { Text("Import from file") }
+                }
+                if (backupUi.busy) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                }
+                backupUi.message?.let {
+                    Text(it, color = MaterialTheme.colorScheme.primary)
                 }
             }
         }

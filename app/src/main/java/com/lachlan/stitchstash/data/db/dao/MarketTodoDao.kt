@@ -12,6 +12,9 @@ interface MarketTodoDao {
     @Query("SELECT * FROM market_todos WHERE marketId = :marketId ORDER BY isDone ASC, createdAt ASC")
     fun observeForMarket(marketId: Long): Flow<List<MarketTodo>>
 
+    @Query("SELECT * FROM market_todos")
+    suspend fun getAll(): List<MarketTodo>
+
     @Insert
     suspend fun insert(todo: MarketTodo): Long
 

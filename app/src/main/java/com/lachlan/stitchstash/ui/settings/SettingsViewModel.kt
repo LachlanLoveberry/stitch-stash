@@ -1,6 +1,7 @@
 package com.lachlan.stitchstash.ui.settings
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lachlan.stitchstash.StitchStashApp
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -103,14 +103,43 @@ class SettingsViewModel(private val repo: StitchRepository) : ViewModel() {
         }
     }
 
-    fun exportToDevice(context: Context, onSaved: (String) -> Unit) {
+    fun defaultExportFileName(): String {
+        val date = SimpleDateFormat("yyyy-MM-dd-HHmm", Locale.US).format(Date())
+        return "stitch-stash-$date.json"
+    }
+
+    fun exportToUri(context: Context, uri: Uri) {
         viewModelScope.launch {
-            val app = context.applicationContext as StitchStashApp
-            val json = BackupSerializer.export(app.database)
-            val dir = File(context.filesDir, "backups").apply { if (!exists()) mkdirs() }
-            val date = SimpleDateFormat("yyyy-MM-dd-HHmm", Locale.US).format(Date())
-            val file = File(dir, "stitch-stash-$date.json").apply { writeText(json) }
-            onSaved(file.absolutePath)
+            _backupUi.value = _backupUi.value.copy(busy = true, message = null)
+            runCatching {
+                val app = context.applicationContext as StitchStashApp
+                val json = BackupSerializer.export(app.database)
+                context.contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
+                    ?: error("Couldn't open the chosen file for writing")
+            }.onSuccess {
+                _backupUi.value = _backupUi.value.copy(busy = false, message = "Exported.")
+            }.onFailure {
+                _backupUi.value = _backupUi.value.copy(busy = false, message = "Export failed: ${it.message}")
+            }
+        }
+    }
+
+    fun importFromUri(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _backupUi.value = _backupUi.value.copy(busy = true, message = null)
+            runCatching {
+                val app = context.applicationContext as StitchStashApp
+                val json = context.contentResolver.openInputStream(uri)?.use { it.reader().readText() }
+                    ?: error("Couldn't open the chosen file")
+                BackupSerializer.import(app.database, json)
+            }.onSuccess { summary ->
+                _backupUi.value = _backupUi.value.copy(
+                    busy = false,
+                    message = "Imported ${summary.patterns} patterns, ${summary.completions} completions, ${summary.markets} markets.",
+                )
+            }.onFailure {
+                _backupUi.value = _backupUi.value.copy(busy = false, message = "Import failed: ${it.message}")
+            }
         }
     }
 
