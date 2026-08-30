@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,10 +29,16 @@ import com.lachlan.stitchstash.data.db.entities.Colourway
 import com.lachlan.stitchstash.data.db.entities.Pattern
 import com.lachlan.stitchstash.ui.AppViewModelFactory
 import com.lachlan.stitchstash.ui.components.DetailScaffold
+import com.lachlan.stitchstash.ui.components.DialogActionRow
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+private val LocalDateSaver: Saver<LocalDate, Long> = Saver(
+    save = { it.toEpochDay() },
+    restore = { LocalDate.ofEpochDay(it) },
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,13 +52,21 @@ fun LogCompletionScreen(
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    var selectedPattern by remember { mutableStateOf<Pattern?>(null) }
-    var selectedColourway by remember { mutableStateOf<Colourway?>(null) }
-    var date by remember { mutableStateOf(LocalDate.now()) }
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
-    var notes by remember { mutableStateOf("") }
-    var energyTag by remember { mutableStateOf<String?>(null) }
+    // Pattern/Colourway aren't Parcelable, so the selection is held by id and re-resolved
+    // against `state` below — that id survives rotation via rememberSaveable, unlike a plain
+    // `remember { mutableStateOf<Pattern?>(null) }` would.
+    var selectedPatternId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var selectedColourwayId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val selectedPattern = state.patterns.firstOrNull { it.id == selectedPatternId }
+    val selectedColourway = selectedPattern?.let { p ->
+        state.colourwaysByPattern[p.id].orEmpty().firstOrNull { it.id == selectedColourwayId }
+    }
+    var date by rememberSaveable(stateSaver = LocalDateSaver) { mutableStateOf(LocalDate.now()) }
+    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var notes by rememberSaveable { mutableStateOf("") }
+    var energyTag by rememberSaveable { mutableStateOf<String?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showAddColourway by remember { mutableStateOf(false) }
     var celebration by remember { mutableStateOf<CelebrationData?>(null) }
 
     val pickImage = rememberLauncherForActivityResult(
@@ -75,23 +91,24 @@ fun LogCompletionScreen(
                     pattern = p,
                     selected = selectedPattern?.id == p.id,
                     onClick = {
-                        selectedPattern = p
-                        selectedColourway = null
+                        selectedPatternId = p.id
+                        selectedColourwayId = null
                     },
                 )
             }
 
             selectedPattern?.let { pattern ->
                 val colourways = state.colourwaysByPattern[pattern.id].orEmpty()
-                if (colourways.isNotEmpty()) {
-                    SectionLabel("Colourway")
-                    colourways.forEach { cw ->
-                        ChoiceRow(
-                            label = cw.name,
-                            selected = selectedColourway?.id == cw.id,
-                            onClick = { selectedColourway = cw },
-                        )
-                    }
+                SectionLabel("Colourway")
+                colourways.forEach { cw ->
+                    ChoiceRow(
+                        label = cw.name,
+                        selected = selectedColourway?.id == cw.id,
+                        onClick = { selectedColourwayId = cw.id },
+                    )
+                }
+                TextButton(onClick = { showAddColourway = true }) {
+                    Text("+ Add colourway")
                 }
             }
 
@@ -178,6 +195,20 @@ fun LogCompletionScreen(
         }
     }
 
+    if (showAddColourway) {
+        selectedPattern?.let { pattern ->
+            AddColourwayDialog(
+                onDismiss = { showAddColourway = false },
+                onConfirm = { name ->
+                    viewModel.addColourway(pattern.id, name) { newId ->
+                        selectedColourwayId = newId
+                    }
+                    showAddColourway = false
+                },
+            )
+        }
+    }
+
     celebration?.let { data ->
         CelebrationDialog(
             data = data,
@@ -191,6 +222,33 @@ fun LogCompletionScreen(
             },
         )
     }
+}
+
+@Composable
+private fun AddColourwayDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add colourway") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            DialogActionRow {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(
+                    onClick = { onConfirm(name.trim()) },
+                    enabled = name.isNotBlank(),
+                ) { Text("Add") }
+            }
+        },
+    )
 }
 
 @Composable

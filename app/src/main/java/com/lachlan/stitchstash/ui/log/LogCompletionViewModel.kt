@@ -42,6 +42,13 @@ class LogCompletionViewModel(private val repo: StitchRepository) : ViewModel() {
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LogState())
 
+    fun addColourway(patternId: Long, name: String, onAdded: (Long) -> Unit) {
+        viewModelScope.launch {
+            val id = repo.addColourway(Colourway(patternId = patternId, name = name))
+            onAdded(id)
+        }
+    }
+
     fun logCompletion(
         context: Context,
         pattern: Pattern,
